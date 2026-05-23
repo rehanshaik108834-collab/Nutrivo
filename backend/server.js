@@ -30,5 +30,5 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/nutrivo')
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB error:', err));
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Nutrivo server running on port ${PORT}`));
+const PORT = process.env.PORT || 7860;
+app.listen(PORT, '0.0.0.0', () => console.log(`Nutrivo server running on port ${PORT}`));

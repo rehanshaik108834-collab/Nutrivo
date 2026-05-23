@@ -1,7 +1,16 @@
-FROM node:18-alpine
+FROM node:18-slim
+
+RUN useradd -m -u 1000 user
 WORKDIR /app
+
 COPY package*.json ./
-RUN npm install
+RUN npm ci --only=production
+
 COPY . .
-EXPOSE 5000
+
+RUN chown -R user:user /app
+USER user
+
+EXPOSE 7860
+
 CMD ["node", "server.js"]
