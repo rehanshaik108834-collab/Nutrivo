@@ -27,7 +27,16 @@ app.get('/api/health', (req, res) => res.json({ status: 'Nutrivo API running' })
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/nutrivo')
-  .then(() => console.log('MongoDB connected'))
+  .then(async () => {
+    console.log('MongoDB connected');
+    // Drop stale clerkId index if it exists (from old schema)
+    try {
+      await mongoose.connection.collection('users').dropIndex('clerkId_1');
+      console.log('Dropped stale clerkId_1 index');
+    } catch (e) {
+      // Index doesn't exist, that's fine
+    }
+  })
   .catch(err => console.error('MongoDB error:', err));
 
 const PORT = process.env.PORT || 7860;
