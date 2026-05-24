@@ -120,5 +120,5 @@ Nutrivo utilizes a highly structured prompt to guide the Vision AI:
 ---
 
 <div align="center">
-  <p>Built with ❤️ by Rehan</p>
+  <p>Built by Rehan</p>
 </div>
