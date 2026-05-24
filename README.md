@@ -1,6 +1,4 @@
 <div align="center">
-  <img src="frontend/public/logo192.png" alt="Nutrivo Logo" width="120" />
-
   <h1>🥗 Nutrivo</h1>
   
   <p><strong>Snap a photo. Get your macros. Track everything effortlessly.</strong></p>
