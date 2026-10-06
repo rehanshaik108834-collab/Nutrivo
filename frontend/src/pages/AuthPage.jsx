@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Camera, BarChart3, Flame } from 'lucide-react';
+import { Camera, BarChart3, Flame, ArrowRight } from 'lucide-react';
 
 export default function AuthPage() {
   const [mode, setMode] = useState('signin');
@@ -21,129 +21,137 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0b0c10] flex relative overflow-hidden transition-colors duration-500">
-      {/* Dynamic Background */}
+    <div className="min-h-screen bg-slate-50 flex relative overflow-hidden font-sans text-slate-800">
+      {/* Soft Pastel Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute w-[50vw] h-[50vw] rounded-full blur-[120px] opacity-40 bg-lime-500/40 -top-1/4 -left-10 animate-[float_6s_ease-in-out_infinite]" />
-        <div className="absolute w-[40vw] h-[40vw] rounded-full blur-[120px] opacity-40 bg-teal-500/30 -bottom-10 -right-10 animate-[float_6s_ease-in-out_infinite]" style={{ animationDelay: '2s' }} />
+        <div className="absolute w-[60vw] h-[60vw] rounded-full blur-[100px] opacity-60 bg-pastel-blue -top-[20%] -left-[10%] animate-float" />
+        <div className="absolute w-[50vw] h-[50vw] rounded-full blur-[100px] opacity-60 bg-pastel-green -bottom-[10%] -right-[10%] animate-float" style={{ animationDelay: '3s' }} />
+        <div className="absolute w-[40vw] h-[40vw] rounded-full blur-[100px] opacity-60 bg-pastel-yellow top-[20%] left-[40%] animate-float" style={{ animationDelay: '1s' }} />
       </div>
 
-      {/* Main Content */}
-      <div className="w-full max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row items-center p-6 md:p-12 lg:p-20">
+      <div className="w-full max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row items-center justify-center p-6 md:p-12 lg:p-20 gap-12 lg:gap-24">
         
-        {/* Left panel */}
-        <div className="flex-1 flex flex-col justify-center pr-0 md:pr-16 lg:pr-24 mb-12 md:mb-0">
-          <div className="flex items-center gap-3 mb-16 animate-fade-in-up">
-            <div className="bg-gradient-to-br from-lime-400 to-teal-500 p-0.5 rounded-xl shadow-lg shadow-lime-500/20">
-              <div className="w-10 h-10 bg-white dark:bg-[#17181f] rounded-[10px] flex items-center justify-center font-display font-bold text-xl text-slate-900 dark:text-white">
-                N
-              </div>
+        {/* Left Side: Brand & Value Props */}
+        <div className="flex-1 max-w-xl">
+          
+          <div className="flex items-center gap-3 mb-10">
+            <div className="bg-slate-900 text-white w-12 h-12 rounded-[20px] flex items-center justify-center font-display font-bold text-2xl shadow-sm">
+              N
             </div>
-            <span className="font-display font-extrabold text-2xl tracking-tight text-slate-900 dark:text-white">nutrivo</span>
+            <span className="font-display font-extrabold text-3xl tracking-tight text-slate-900">nutrivo</span>
           </div>
           
-          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.1] text-slate-900 dark:text-white mb-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-            Track nutrition <br />
-            <span className="bg-gradient-to-r from-lime-500 to-teal-400 bg-clip-text text-transparent">effortlessly.</span>
+          <h1 className="font-display text-5xl md:text-6xl font-extrabold leading-[1.1] text-slate-900 mb-6">
+            Meet your new <br/>
+            <span className="relative inline-block mt-2">
+              <span className="relative z-10">smart diary.</span>
+              <span className="absolute bottom-1 left-0 w-full h-4 bg-pastel-green -z-10 rounded-full opacity-80"></span>
+            </span>
           </h1>
           
-          <p className="text-slate-500 dark:text-slate-400 text-lg md:text-xl leading-relaxed mb-12 max-w-lg animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            Snap a photo of your meal. Our AI does the rest — calories, protein, macros, all of it in seconds.
+          <p className="text-slate-500 text-lg md:text-xl leading-relaxed mb-12">
+            No more tedious logging. Snap a photo of your meal and let AI do the heavy lifting instantly.
           </p>
           
-          <div className="flex flex-col gap-8 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+          <div className="flex flex-col gap-6">
             {[
-              [<Camera className="w-6 h-6 text-lime-500" />, 'AI-Powered Analysis', 'Photo-based meal recognition'],
-              [<BarChart3 className="w-6 h-6 text-teal-400" />, 'Smart Analytics', 'Weekly & monthly insights'],
-              [<Flame className="w-6 h-6 text-orange-400" />, 'Daily Streaks', 'Stay consistent, see results'],
-            ].map(([icon, title, desc], i) => (
-              <div key={i} className="flex items-center gap-5 group">
-                <div className="w-14 h-14 rounded-2xl bg-white dark:bg-[#17181f] border border-slate-200 dark:border-white/5 flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 group-hover:border-lime-500/30 group-hover:shadow-lime-500/20 transition-all duration-300">
+              [<Camera className="w-5 h-5 text-slate-700" />, 'Snap & Analyze', 'bg-pastel-blue'],
+              [<BarChart3 className="w-5 h-5 text-slate-700" />, 'Track Macros', 'bg-pastel-green'],
+              [<Flame className="w-5 h-5 text-slate-700" />, 'Hit Your Goals', 'bg-pastel-yellow'],
+            ].map(([icon, title, bgColor], i) => (
+              <div key={i} className="flex items-center gap-4 bg-white/60 backdrop-blur-sm p-4 rounded-3xl shadow-sm border border-white/40 max-w-md hover:scale-[1.02] transition-transform cursor-default">
+                <div className={`w-12 h-12 rounded-full ${bgColor} flex items-center justify-center shrink-0`}>
                   {icon}
                 </div>
-                <div>
-                  <div className="text-slate-900 dark:text-white font-bold text-lg">{title}</div>
-                  <div className="text-slate-500 dark:text-slate-400 text-sm mt-1">{desc}</div>
-                </div>
+                <div className="font-bold text-lg text-slate-800">{title}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Right panel (Form) */}
-        <div className="w-full md:w-[440px] flex-shrink-0 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-          <div className="bg-white/70 dark:bg-[#17181f]/70 backdrop-blur-2xl border border-white/40 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-black/50 rounded-3xl p-8 sm:p-10">
-            <h2 className="font-display text-3xl font-extrabold text-slate-900 dark:text-white mb-2">
-              {mode === 'signin' ? 'Welcome back' : 'Create account'}
-            </h2>
-            <p className="text-slate-500 dark:text-slate-400 mb-8">
-              {mode === 'signin' ? 'Sign in to continue tracking' : 'Start your nutrition journey'}
-            </p>
+        {/* Right Side: Form */}
+        <div className="w-full max-w-[420px]">
+          <div className="bg-white rounded-[40px] p-8 sm:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden">
+            
+            {/* Soft decorative blob inside card */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-pastel-blue/40 blur-2xl rounded-full -mr-10 -mt-10" />
 
-            <form onSubmit={handle} className="flex flex-col gap-5">
-              {mode === 'signup' && (
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Full Name</label>
+            <div className="relative z-10">
+              <h2 className="font-display text-3xl font-extrabold text-slate-900 mb-2">
+                {mode === 'signin' ? 'Welcome back' : 'Create account'}
+              </h2>
+              <p className="text-slate-500 mb-8 font-medium">
+                {mode === 'signin' ? 'Enter your details to sign in.' : 'Start your journey today.'}
+              </p>
+
+              <form onSubmit={handle} className="flex flex-col gap-5">
+                {mode === 'signup' && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-bold text-slate-700 ml-1">Full Name</label>
+                    <input 
+                      className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-slate-900 focus:outline-none focus:ring-4 focus:ring-pastel-blue transition-all font-medium"
+                      placeholder="Alex Johnson" 
+                      value={form.name}
+                      onChange={e => setForm({...form, name: e.target.value})} 
+                      required 
+                    />
+                  </div>
+                )}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-bold text-slate-700 ml-1">Email</label>
                   <input 
-                    className="w-full bg-slate-50 dark:bg-[#0b0c10] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white focus:outline-none focus:border-lime-500 focus:ring-4 focus:ring-lime-500/10 transition-all"
-                    placeholder="Alex Johnson" 
-                    value={form.name}
-                    onChange={e => setForm({...form, name: e.target.value})} 
+                    className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-slate-900 focus:outline-none focus:ring-4 focus:ring-pastel-blue transition-all font-medium"
+                    type="email" 
+                    placeholder="you@example.com" 
+                    value={form.email}
+                    onChange={e => setForm({...form, email: e.target.value})} 
                     required 
                   />
                 </div>
-              )}
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Email</label>
-                <input 
-                  className="w-full bg-slate-50 dark:bg-[#0b0c10] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white focus:outline-none focus:border-lime-500 focus:ring-4 focus:ring-lime-500/10 transition-all"
-                  type="email" 
-                  placeholder="you@example.com" 
-                  value={form.email}
-                  onChange={e => setForm({...form, email: e.target.value})} 
-                  required 
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Password</label>
-                <input 
-                  className="w-full bg-slate-50 dark:bg-[#0b0c10] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white focus:outline-none focus:border-lime-500 focus:ring-4 focus:ring-lime-500/10 transition-all"
-                  type="password" 
-                  placeholder="••••••••" 
-                  value={form.password}
-                  onChange={e => setForm({...form, password: e.target.value})} 
-                  required 
-                />
-              </div>
-
-              {error && (
-                <div className="bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm font-medium animate-fade-in-up">
-                  {error}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-bold text-slate-700 ml-1">Password</label>
+                  <input 
+                    className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-slate-900 focus:outline-none focus:ring-4 focus:ring-pastel-blue transition-all font-medium"
+                    type="password" 
+                    placeholder="••••••••" 
+                    value={form.password}
+                    onChange={e => setForm({...form, password: e.target.value})} 
+                    required 
+                  />
                 </div>
-              )}
 
-              <button 
-                type="submit" 
-                disabled={loading} 
-                className="w-full bg-gradient-to-r from-lime-500 to-lime-600 hover:from-lime-400 hover:to-lime-500 text-white dark:text-slate-950 font-bold text-lg py-4 rounded-xl shadow-lg shadow-lime-500/30 hover:shadow-lime-500/50 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none mt-2 flex justify-center items-center h-[56px]"
-              >
-                {loading ? (
-                  <div className="w-6 h-6 border-[3px] border-white/30 border-t-white dark:border-slate-950/30 dark:border-t-slate-950 rounded-full animate-spin" />
-                ) : (
-                  mode === 'signin' ? 'Sign In' : 'Create Account'
+                {error && (
+                  <div className="bg-red-50 text-red-600 px-5 py-3 rounded-2xl text-sm font-semibold mt-2">
+                    {error}
+                  </div>
                 )}
-              </button>
-            </form>
 
-            <div className="text-center mt-8 text-slate-500 dark:text-slate-400 text-sm">
-              {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
-              <button 
-                type="button" 
-                onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); }}
-                className="font-bold text-lime-600 dark:text-lime-400 hover:text-lime-700 dark:hover:text-lime-300 transition-colors"
-              >
-                {mode === 'signin' ? 'Sign up' : 'Sign in'}
-              </button>
+                <button 
+                  type="submit" 
+                  disabled={loading} 
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-lg py-4 rounded-3xl shadow-[0_10px_20px_-10px_rgba(0,0,0,0.5)] hover:shadow-[0_15px_25px_-10px_rgba(0,0,0,0.6)] hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mt-4 flex justify-center items-center gap-2"
+                >
+                  {loading ? (
+                    <div className="w-6 h-6 border-[3px] border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      {mode === 'signin' ? 'Sign In' : 'Create Account'}
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <div className="text-center mt-8 text-slate-500 text-sm font-medium">
+                {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
+                <button 
+                  type="button" 
+                  onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); }}
+                  className="font-bold text-slate-900 hover:text-slate-600 transition-colors"
+                >
+                  {mode === 'signin' ? 'Sign up' : 'Sign in'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
