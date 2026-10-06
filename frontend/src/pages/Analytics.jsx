@@ -18,7 +18,7 @@ function CustomTooltip({ active, payload, label }) {
       <div className="font-bold text-slate-500 mb-2">{label}</div>
       {payload.map((p, i) => (
         <div key={i} className="font-extrabold mt-0.5" style={{ color: p.color }}>
-          {p.name}: {Math.round(p.value)}{p.name === 'calories' ? ' kcal' : 'g'}
+          {p.name}: {Math.round(p.value)}{p.name === 'calories' ? ' kcal' : p.name === 'Water' ? ' ml' : 'g'}
         </div>
       ))}
     </div>
@@ -348,7 +348,7 @@ export default function Analytics() {
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
-                  <Bar dataKey="calories" name="calories" fill="#60a5fa" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="calories" name="calories" fill="#60a5fa" radius={[8, 8, 0, 0]} maxBarSize={60} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -392,25 +392,15 @@ export default function Analytics() {
               <div className="h-40 flex items-center justify-center text-slate-400 font-medium">No water logged yet. Start tracking on the dashboard!</div>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={waterHistory.map(d => ({ ...d, name: d.label.split(',')[0] }))} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#60a5fa" stopOpacity={1} />
-                      <stop offset="100%" stopColor="#93c5fd" stopOpacity={0.8} />
-                    </linearGradient>
-                  </defs>
+                <BarChart data={waterHistory.map(d => ({ ...d, name: d.label }))} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} tickFormatter={v => v >= 1000 ? `${v/1000}L` : v} />
-                  <Tooltip
-                    contentStyle={{ background: '#fff', border: '1px solid #f1f5f9', borderRadius: 12, fontSize: 12, fontWeight: 600 }}
-                    formatter={(v) => [`${v}ml`, 'Water']}
-                    labelFormatter={(l) => l}
-                  />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
                   <ReferenceLine y={goals.water || 2500} stroke="#93c5fd" strokeDasharray="6 3" strokeWidth={2}
                     label={{ value: 'Goal', position: 'insideTopRight', fill: '#93c5fd', fontSize: 11, fontWeight: 700 }}
                   />
-                  <Bar dataKey="totalMl" name="Water" fill="url(#waterGrad)" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="totalMl" name="Water" fill="#60a5fa" radius={[8, 8, 0, 0]} maxBarSize={60} />
                 </BarChart>
               </ResponsiveContainer>
             )}
