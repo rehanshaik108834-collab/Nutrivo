@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { API, useAuth } from '../context/AuthContext';
+import { User, Target, CheckCircle, Loader2, Flame, Beef, Wheat, Droplets, Salad } from 'lucide-react';
 
 export default function Profile() {
   const { user, updateUser } = useAuth();
@@ -14,8 +15,7 @@ export default function Profile() {
     setSaving(true);
     try {
       const { data } = await axios.patch(`${API}/users/goals`, goals);
-      updateUser(data.user);
-      flash();
+      updateUser(data.user); flash();
     } catch (err) { console.error(err); }
     finally { setSaving(false); }
   };
@@ -24,155 +24,135 @@ export default function Profile() {
     setSaving(true);
     try {
       const { data } = await axios.patch(`${API}/users/profile`, { name: profile.name, profile });
-      updateUser(data.user);
-      flash();
+      updateUser(data.user); flash();
     } catch (err) { console.error(err); }
     finally { setSaving(false); }
   };
 
   const flash = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
 
-  const GoalInput = ({ label, key_, unit, color }) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--bg)', padding: '16px', borderRadius: 12, border: '1px solid var(--border)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <label style={{ fontSize: 15, color: 'var(--text)', fontWeight: 600 }}>{label}</label>
-        <span style={{ fontSize: 16, color, fontWeight: 800 }}>{goals[key_]} <span style={{ fontSize: 13, fontWeight: 600 }}>{unit}</span></span>
-      </div>
-      <input type="range" min={key_ === 'calories' ? 1000 : 10} max={key_ === 'calories' ? 5000 : 500}
-        step={key_ === 'calories' ? 50 : 5} value={goals[key_]}
-        onChange={e => setGoals({...goals, [key_]: +e.target.value})}
-        style={{ accentColor: color, width: '100%', cursor: 'pointer' }} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text3)', fontWeight: 500 }}>
-        <span>{key_ === 'calories' ? '1000 kcal' : '10g'}</span>
-        <span>{key_ === 'calories' ? '5000 kcal' : '500g'}</span>
-      </div>
-    </div>
-  );
+  const goalFields = [
+    { key: 'calories', label: 'Daily Calories', unit: 'kcal', min: 1000, max: 5000, step: 50, icon: Flame,    color: '#fbbf24' },
+    { key: 'protein',  label: 'Protein Goal',   unit: 'g',    min: 10,   max: 300,  step: 5,  icon: Beef,     color: '#a78bfa' },
+    { key: 'carbs',    label: 'Carbs Goal',      unit: 'g',    min: 10,   max: 600,  step: 5,  icon: Wheat,    color: '#60a5fa' },
+    { key: 'fat',      label: 'Fat Goal',        unit: 'g',    min: 10,   max: 200,  step: 5,  icon: Droplets, color: '#f472b6' },
+    { key: 'fiber',    label: 'Fiber Goal',      unit: 'g',    min: 5,    max: 100,  step: 5,  icon: Salad,    color: '#34d399' },
+  ];
 
   return (
-    <div style={{ maxWidth: 640, margin: '0 auto' }} className="fade-in">
-      <div style={{ marginBottom: 40 }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 800, color: 'var(--text)', marginBottom: 8 }}>Profile</h1>
-        <p style={{ color: 'var(--text3)', fontSize: 16, fontWeight: 500 }}>Manage your goals, personal information, and preferences.</p>
+    <div className="max-w-2xl mx-auto animate-[fadeInUp_0.5s_ease-out_both]">
+      <div className="mb-8">
+        <h1 className="font-display text-4xl font-extrabold text-slate-800 tracking-tight mb-2">Profile</h1>
+        <p className="text-slate-500 font-medium">Manage your goals and personal information.</p>
       </div>
 
-      {/* User card */}
-      <div className="glass-panel" style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 32, padding: '32px' }}>
-        <div style={{
-          width: 80, height: 80, background: 'linear-gradient(135deg, var(--purple), var(--pink))',
-          borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', fontWeight: 800, fontSize: 32, fontFamily: 'var(--font-display)',
-          boxShadow: '0 8px 24px rgba(236, 72, 153, 0.3)'
-        }}>{user?.name?.[0]?.toUpperCase()}</div>
-        <div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>{user?.name}</div>
-          <div style={{ color: 'var(--text2)', fontSize: 15, fontWeight: 500 }}>{user?.email}</div>
+      {/* User Card */}
+      <div className="bg-white rounded-[28px] p-7 shadow-[0_8px_30px_-8px_rgba(0,0,0,0.06)] border border-slate-100 mb-6 flex items-center gap-6">
+        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-display font-extrabold text-3xl shadow-md flex-shrink-0">
+          {user?.name?.[0]?.toUpperCase() || 'U'}
         </div>
-        {user?.streak > 0 && (
-          <div style={{ marginLeft: 'auto', textAlign: 'center', background: 'var(--surface2)', padding: '12px 24px', borderRadius: 16, border: '1px solid var(--border)' }}>
-            <div style={{ fontSize: 28, marginBottom: 4 }}>🔥</div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 800, color: 'var(--lime-dim)', lineHeight: 1 }}>{user.streak}</div>
-            <div style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 4 }}>Day Streak</div>
-          </div>
-        )}
+        <div>
+          <div className="font-display font-extrabold text-2xl text-slate-800">{user?.name}</div>
+          <div className="text-slate-400 font-medium">{user?.email}</div>
+          {user?.streak > 0 && (
+            <div className="flex items-center gap-2 mt-2 bg-amber-50 border border-amber-100 text-amber-700 px-3 py-1.5 rounded-full w-fit">
+              <Flame className="w-4 h-4" />
+              <span className="text-sm font-bold">{user.streak} day streak</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 8, background: 'var(--surface)', borderRadius: 16, padding: 6, marginBottom: 32, border: '1px solid var(--border)' }}>
-        {['goals', 'personal'].map(t => (
-          <button key={t} onClick={() => setTab(t)} style={{
-            flex: 1, padding: '12px', borderRadius: 12, border: 'none', cursor: 'pointer',
-            background: tab === t ? 'var(--lime)' : 'transparent',
-            color: tab === t ? '#000' : 'var(--text2)',
-            fontWeight: 700, fontSize: 15, transition: 'all 0.2s', textTransform: 'capitalize',
-            boxShadow: tab === t ? '0 2px 8px var(--lime-glow)' : 'none'
-          }}>{t === 'goals' ? 'Nutrition Goals' : 'Personal Info'}</button>
+      <div className="flex bg-white rounded-2xl p-1.5 shadow-sm border border-slate-100 mb-6">
+        {[
+          { id: 'goals',   label: 'Goals',   icon: Target },
+          { id: 'profile', label: 'Details', icon: User   },
+        ].map(({ id, label, icon: Icon }) => (
+          <button key={id} onClick={() => setTab(id)}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${tab === id ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>
+            <Icon className="w-4 h-4" />
+            {label}
+          </button>
         ))}
       </div>
 
+      {/* Goals Tab */}
       {tab === 'goals' && (
-        <div className="glass-panel" style={{ padding: '32px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginBottom: 32 }}>
-            <GoalInput label="Daily Calorie Goal" key_="calories" unit="kcal" color="var(--lime)" />
-            <GoalInput label="Protein Target" key_="protein" unit="g" color="var(--blue)" />
-            <GoalInput label="Carbohydrates Target" key_="carbs" unit="g" color="var(--amber)" />
-            <GoalInput label="Fat Target" key_="fat" unit="g" color="var(--purple)" />
-            <GoalInput label="Fiber Target" key_="fiber" unit="g" color="var(--teal)" />
-          </div>
-
-          {/* Macro preview */}
-          <div style={{ background: 'var(--bg)', borderRadius: 16, padding: '24px', marginBottom: 32, border: '1px solid var(--border)' }}>
-            <div style={{ fontSize: 14, color: 'var(--text)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 16 }}>Macro Split Preview</div>
-            <div style={{ display: 'flex', height: 12, borderRadius: 6, overflow: 'hidden', gap: 2, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)' }}>
-              {(() => {
-                const totalCals = goals.protein * 4 + goals.carbs * 4 + goals.fat * 9;
-                return [
-                  ['var(--blue)', (goals.protein * 4 / totalCals) * 100],
-                  ['var(--amber)', (goals.carbs * 4 / totalCals) * 100],
-                  ['var(--purple)', (goals.fat * 9 / totalCals) * 100],
-                ].map(([color, pct], i) => (
-                  <div key={i} style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: i === 0 ? '6px 0 0 6px' : i === 2 ? '0 6px 6px 0' : 0 }} />
-                ));
-              })()}
-            </div>
-            <div style={{ display: 'flex', gap: 24, marginTop: 16, flexWrap: 'wrap' }}>
-              {[['Protein', 'var(--blue)', goals.protein * 4], ['Carbs', 'var(--amber)', goals.carbs * 4], ['Fat', 'var(--purple)', goals.fat * 9]].map(([l, c, cal]) => (
-                <div key={l} style={{ fontSize: 13, color: c, fontWeight: 700, background: 'var(--surface)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border)' }}>
-                  {l}: {Math.round(cal / (goals.protein * 4 + goals.carbs * 4 + goals.fat * 9) * 100)}%
+        <div className="bg-white rounded-[28px] p-7 shadow-[0_8px_30px_-8px_rgba(0,0,0,0.06)] border border-slate-100">
+          <h2 className="font-display font-bold text-xl text-slate-800 mb-6">Daily Nutrition Goals</h2>
+          <div className="flex flex-col gap-6">
+            {goalFields.map(({ key, label, unit, min, max, step, icon: Icon, color }) => (
+              <div key={key} className="bg-slate-50 rounded-2xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${color}20` }}>
+                      <Icon className="w-4 h-4" style={{ color }} />
+                    </div>
+                    <span className="font-bold text-slate-700">{label}</span>
+                  </div>
+                  <span className="font-display font-extrabold text-2xl text-slate-800">
+                    {goals[key]} <span className="text-sm text-slate-400 font-semibold">{unit}</span>
+                  </span>
                 </div>
-              ))}
-            </div>
+                <input type="range" min={min} max={max} step={step} value={goals[key]}
+                  onChange={e => setGoals({ ...goals, [key]: +e.target.value })}
+                  className="w-full h-2 rounded-full cursor-pointer appearance-none bg-slate-200"
+                  style={{ accentColor: color }} />
+                <div className="flex justify-between text-xs text-slate-400 font-semibold mt-2">
+                  <span>{min} {unit}</span>
+                  <span>{max} {unit}</span>
+                </div>
+              </div>
+            ))}
           </div>
-
-          <button className="btn btn-lime" onClick={saveGoals} disabled={saving} style={{ width: '100%', padding: '16px', borderRadius: 12, fontSize: 16 }}>
-            {saving ? <span className="spinner" /> : saved ? '✓ Saved Successfully!' : 'Save Nutrition Goals'}
+          <button onClick={saveGoals} disabled={saving}
+            className="w-full mt-6 flex items-center justify-center gap-2 bg-slate-900 text-white py-4 rounded-2xl font-bold shadow hover:bg-slate-700 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50">
+            {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : saved ? <><CheckCircle className="w-5 h-5 text-green-400" /> Saved!</> : 'Save Goals'}
           </button>
         </div>
       )}
 
-      {tab === 'personal' && (
-        <div className="glass-panel" style={{ padding: '32px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24, marginBottom: 32 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label style={{ fontSize: 14, color: 'var(--text)', fontWeight: 600 }}>Full Name</label>
-              <input className="input" value={profile.name} onChange={e => setProfile({...profile, name: e.target.value})} placeholder="Your name" />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontSize: 14, color: 'var(--text)', fontWeight: 600 }}>Age</label>
-                <input className="input" type="number" value={profile.age || ''} onChange={e => setProfile({...profile, age: +e.target.value})} placeholder="25" />
+      {/* Profile Tab */}
+      {tab === 'profile' && (
+        <div className="bg-white rounded-[28px] p-7 shadow-[0_8px_30px_-8px_rgba(0,0,0,0.06)] border border-slate-100">
+          <h2 className="font-display font-bold text-xl text-slate-800 mb-6">Personal Information</h2>
+          <div className="flex flex-col gap-5">
+            {[
+              { key: 'name', label: 'Full Name', type: 'text', placeholder: 'Alex Johnson' },
+              { key: 'age',  label: 'Age',       type: 'number', placeholder: '25' },
+              { key: 'weight', label: 'Weight (kg)', type: 'number', placeholder: '70' },
+              { key: 'height', label: 'Height (cm)', type: 'number', placeholder: '175' },
+            ].map(({ key, label, type, placeholder }) => (
+              <div key={key}>
+                <label className="text-xs font-extrabold text-slate-400 uppercase tracking-widest block mb-2">{label}</label>
+                <input
+                  type={type}
+                  placeholder={placeholder}
+                  value={key === 'name' ? profile.name : profile[key] || ''}
+                  onChange={e => key === 'name' ? setProfile({ ...profile, name: e.target.value }) : setProfile({ ...profile, [key]: e.target.value })}
+                  className="w-full bg-slate-50 rounded-2xl px-5 py-3.5 font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 border border-transparent focus:border-blue-200 transition-all"
+                />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontSize: 14, color: 'var(--text)', fontWeight: 600 }}>Weight (kg)</label>
-                <input className="input" type="number" value={profile.weight || ''} onChange={e => setProfile({...profile, weight: +e.target.value})} placeholder="70" />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontSize: 14, color: 'var(--text)', fontWeight: 600 }}>Height (cm)</label>
-                <input className="input" type="number" value={profile.height || ''} onChange={e => setProfile({...profile, height: +e.target.value})} placeholder="175" />
-              </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label style={{ fontSize: 14, color: 'var(--text)', fontWeight: 600 }}>Goal</label>
-              <select className="input" value={profile.goal || 'maintain'} onChange={e => setProfile({...profile, goal: e.target.value})} style={{ cursor: 'pointer' }}>
-                <option value="lose">Lose Weight</option>
-                <option value="maintain">Maintain Weight</option>
-                <option value="gain">Gain Weight</option>
-              </select>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label style={{ fontSize: 14, color: 'var(--text)', fontWeight: 600 }}>Activity Level</label>
-              <select className="input" value={profile.activityLevel || 'moderate'} onChange={e => setProfile({...profile, activityLevel: e.target.value})} style={{ cursor: 'pointer' }}>
-                <option value="sedentary">Sedentary (desk job)</option>
-                <option value="light">Light (1-3x/week)</option>
-                <option value="moderate">Moderate (3-5x/week)</option>
-                <option value="active">Active (6-7x/week)</option>
-                <option value="very_active">Very Active (athlete)</option>
+            ))}
+
+            <div>
+              <label className="text-xs font-extrabold text-slate-400 uppercase tracking-widest block mb-2">Activity Level</label>
+              <select value={profile.activityLevel || ''} onChange={e => setProfile({ ...profile, activityLevel: e.target.value })}
+                className="w-full bg-slate-50 rounded-2xl px-5 py-3.5 font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 border border-transparent focus:border-blue-200 transition-all">
+                <option value="">Select level</option>
+                <option value="sedentary">Sedentary (little/no exercise)</option>
+                <option value="light">Light (1-3 days/week)</option>
+                <option value="moderate">Moderate (3-5 days/week)</option>
+                <option value="active">Active (6-7 days/week)</option>
+                <option value="very_active">Very Active (2x per day)</option>
               </select>
             </div>
           </div>
 
-          <button className="btn btn-lime" onClick={saveProfile} disabled={saving} style={{ width: '100%', padding: '16px', borderRadius: 12, fontSize: 16 }}>
-            {saving ? <span className="spinner" /> : saved ? '✓ Saved Successfully!' : 'Save Profile Info'}
+          <button onClick={saveProfile} disabled={saving}
+            className="w-full mt-6 flex items-center justify-center gap-2 bg-slate-900 text-white py-4 rounded-2xl font-bold shadow hover:bg-slate-700 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50">
+            {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : saved ? <><CheckCircle className="w-5 h-5 text-green-400" /> Saved!</> : 'Save Profile'}
           </button>
         </div>
       )}

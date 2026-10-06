@@ -1,158 +1,97 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
+import { LayoutDashboard, PlusCircle, BarChart3, User, LogOut, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
 const NAV = [
-  { to: '/', label: 'Today', icon: '◈' },
-  { to: '/log', label: 'Log Meal', icon: '⊕' },
-  { to: '/analytics', label: 'Analytics', icon: '◎' },
-  { to: '/profile', label: 'Profile', icon: '◉' },
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/log', label: 'Log Meal', icon: PlusCircle, highlight: true },
+  { to: '/analytics', label: 'Analytics', icon: BarChart3 },
+  { to: '/profile', label: 'Profile', icon: User },
 ];
 
 export default function Layout() {
   const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = () => { logout(); navigate('/auth'); };
 
   return (
-    <div style={styles.root}>
+    <div className="flex min-h-screen bg-slate-50 font-sans">
+      
       {/* Sidebar */}
-      <aside style={{ ...styles.sidebar, ...(mobileOpen ? styles.sidebarOpen : {}) }}>
-        <div style={styles.logo}>
-          <div style={styles.logoIconContainer}>
-            <span style={styles.logoIcon}>N</span>
-          </div>
-          <span style={styles.logoText}>nutrivo</span>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-100 flex flex-col py-8 px-5 shadow-[4px_0_24px_-8px_rgba(0,0,0,0.05)] transform transition-transform duration-300 md:translate-x-0 md:static md:z-auto md:shadow-none ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-3 mb-12">
+          <div className="bg-slate-900 text-white w-9 h-9 rounded-[14px] flex items-center justify-center font-display font-extrabold text-lg shadow-sm">N</div>
+          <span className="font-display font-extrabold text-2xl text-slate-800 tracking-tight">nutrivo</span>
         </div>
 
-        <nav style={styles.nav}>
-          {NAV.map(item => (
-            <NavLink key={item.to} to={item.to} end={item.to === '/'} onClick={() => setMobileOpen(false)}
-              style={({ isActive }) => ({ ...styles.navItem, ...(isActive ? styles.navActive : {}) })}>
-              <span style={styles.navIcon}>{item.icon}</span>
-              <span style={styles.navLabel}>{item.label}</span>
-              {item.to === '/log' && <span style={styles.logBadge}>+</span>}
+        {/* Nav Links */}
+        <nav className="flex flex-col gap-1.5 flex-1">
+          {NAV.map(({ to, label, icon: Icon, highlight }) => (
+            <NavLink key={to} to={to} end={to === '/'} onClick={() => setMobileOpen(false)}
+              className={({ isActive }) => `flex items-center gap-3.5 px-4 py-3 rounded-2xl font-semibold text-sm transition-all duration-200 
+                ${isActive
+                  ? 'bg-pastel-blue text-blue-800 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                }
+                ${highlight && !isActive ? 'border border-dashed border-slate-200' : ''}
+              `}
+            >
+              <Icon className={`w-5 h-5 ${highlight ? 'text-blue-500' : ''}`} />
+              {label}
+              {highlight && (
+                <span className="ml-auto bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">+</span>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        <div style={styles.bottomSection}>
-          <button onClick={toggleTheme} style={styles.themeToggle}>
-            {theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
-          </button>
-
-          <div style={styles.userSection}>
-            <div style={styles.avatar}>{user?.name?.[0]?.toUpperCase() || 'U'}</div>
-            <div style={styles.userInfo}>
-              <div style={styles.userName}>{user?.name}</div>
-              <div style={styles.userEmail}>{user?.email}</div>
+        {/* User Section */}
+        <div className="mt-6 bg-slate-50 rounded-2xl p-4 border border-slate-100">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              {user?.name?.[0]?.toUpperCase() || 'U'}
             </div>
-            <button onClick={handleLogout} style={styles.logoutBtn} title="Sign out">↗</button>
+            <div className="overflow-hidden flex-1">
+              <div className="text-sm font-bold text-slate-800 truncate">{user?.name}</div>
+              <div className="text-xs text-slate-400 truncate">{user?.email}</div>
+            </div>
           </div>
+          <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-all">
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
         </div>
       </aside>
 
       {/* Mobile overlay */}
-      {mobileOpen && <div style={styles.overlay} onClick={() => setMobileOpen(false)} />}
+      {mobileOpen && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 md:hidden" onClick={() => setMobileOpen(false)} />
+      )}
 
-      {/* Main */}
-      <main style={styles.main}>
-        <div style={styles.mobileHeader}>
-          <button style={styles.menuBtn} onClick={() => setMobileOpen(true)}>☰</button>
-          <span style={styles.mobileLogo}>nutrivo</span>
-          <button onClick={toggleTheme} style={styles.mobileThemeBtn}>
-            {theme === 'light' ? '🌙' : '☀️'}
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100 sticky top-0 z-30">
+          <button onClick={() => setMobileOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 text-slate-700">
+            <Menu className="w-5 h-5" />
           </button>
+          <span className="font-display font-extrabold text-xl text-slate-800">nutrivo</span>
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+            {user?.name?.[0]?.toUpperCase() || 'U'}
+          </div>
         </div>
-        <div style={styles.content}>
+
+        {/* Page Content */}
+        <div className="flex-1 overflow-y-auto p-6 md:p-10">
           <Outlet />
         </div>
       </main>
     </div>
   );
 }
-
-const styles = {
-  root: { display: 'flex', minHeight: '100vh', background: 'var(--bg)' },
-  sidebar: {
-    width: 260, minHeight: '100vh', background: 'var(--surface2)', borderRight: '1px solid var(--border)',
-    display: 'flex', flexDirection: 'column', padding: '32px 20px',
-    position: 'sticky', top: 0, height: '100vh', flexShrink: 0,
-    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    '@media(max-width:768px)': { position: 'fixed' }
-  },
-  sidebarOpen: {
-    position: 'fixed', left: 0, top: 0, zIndex: 1000, transform: 'translateX(0)',
-    boxShadow: 'var(--shadow-lg)'
-  },
-  overlay: {
-    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 999,
-  },
-  logo: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 48, padding: '0 8px' },
-  logoIconContainer: {
-    background: 'linear-gradient(135deg, var(--lime), var(--teal))',
-    padding: '2px', borderRadius: 12,
-  },
-  logoIcon: {
-    width: 34, height: 34, background: 'var(--surface)', color: 'var(--text)',
-    borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, flexShrink: 0
-  },
-  logoText: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, color: 'var(--text)' },
-  nav: { display: 'flex', flexDirection: 'column', gap: 8, flex: 1 },
-  navItem: {
-    display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px',
-    borderRadius: 12, color: 'var(--text2)', textDecoration: 'none',
-    fontSize: 15, fontWeight: 600, transition: 'all 0.2s', position: 'relative'
-  },
-  navActive: {
-    background: 'var(--lime-glow)', color: 'var(--lime-dim)', fontWeight: 700,
-    boxShadow: 'inset 4px 0 0 var(--lime)'
-  },
-  navIcon: { fontSize: 20, width: 24, textAlign: 'center' },
-  navLabel: {},
-  logBadge: {
-    marginLeft: 'auto', width: 22, height: 22, background: 'linear-gradient(135deg, var(--lime), var(--lime-dim))', color: '#fff',
-    borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: 14, fontWeight: 800, lineHeight: 1, boxShadow: '0 2px 8px var(--lime-glow)'
-  },
-  bottomSection: {
-    display: 'flex', flexDirection: 'column', gap: 16, marginTop: 24
-  },
-  themeToggle: {
-    width: '100%', padding: '12px', borderRadius: 12, border: '1px solid var(--border2)',
-    background: 'var(--bg)', color: 'var(--text2)', fontWeight: 600, cursor: 'pointer',
-    transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-    fontFamily: 'var(--font-body)', fontSize: 14
-  },
-  userSection: {
-    display: 'flex', alignItems: 'center', gap: 12, padding: '16px 12px',
-    background: 'var(--bg)', borderRadius: 16, border: '1px solid var(--border)',
-  },
-  avatar: {
-    width: 38, height: 38, background: 'linear-gradient(135deg, var(--purple), var(--pink))',
-    borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    color: '#fff', fontWeight: 700, fontSize: 16, flexShrink: 0, boxShadow: '0 4px 12px rgba(236,72,153,0.3)'
-  },
-  userInfo: { flex: 1, overflow: 'hidden' },
-  userName: { fontSize: 14, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  userEmail: { fontSize: 12, color: 'var(--text3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  logoutBtn: {
-    background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer',
-    fontSize: 18, padding: 4, transition: 'color 0.2s', borderRadius: 8
-  },
-  main: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-  mobileHeader: {
-    display: 'none', padding: '16px 20px', background: 'var(--surface)',
-    borderBottom: '1px solid var(--border)', alignItems: 'center', gap: 16,
-    position: 'sticky', top: 0, zIndex: 10
-  },
-  menuBtn: { background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 20, cursor: 'pointer', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  mobileLogo: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20, color: 'var(--text)', flex: 1 },
-  mobileThemeBtn: { background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' },
-  content: { flex: 1, padding: '40px', overflowY: 'auto', maxWidth: '100%' }
-};

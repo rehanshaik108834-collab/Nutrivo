@@ -2,31 +2,34 @@ import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API } from '../context/AuthContext';
+import { Camera, Upload, X, CheckCircle, ArrowRight, Loader2, Sparkles } from 'lucide-react';
 
-const STAGES = {
-  idle: 'idle',
-  uploading: 'uploading',
-  analyzing: 'analyzing',
-  result: 'result',
-  saving: 'saving'
-};
+const STAGES = { idle: 'idle', uploading: 'uploading', analyzing: 'analyzing', result: 'result' };
+
+const MEAL_TYPES = [
+  { id: 'breakfast', label: 'Breakfast', emoji: '🌅', color: 'bg-amber-50 border-amber-200 text-amber-700', active: 'bg-amber-400 border-amber-400 text-white' },
+  { id: 'lunch',     label: 'Lunch',     emoji: '☀️',  color: 'bg-blue-50 border-blue-200 text-blue-700',   active: 'bg-blue-400 border-blue-400 text-white' },
+  { id: 'dinner',    label: 'Dinner',    emoji: '🌙',  color: 'bg-purple-50 border-purple-200 text-purple-700', active: 'bg-purple-400 border-purple-400 text-white' },
+  { id: 'snack',     label: 'Snack',     emoji: '🍎',  color: 'bg-green-50 border-green-200 text-green-700', active: 'bg-green-400 border-green-400 text-white' },
+];
+
+function autoMealType() {
+  const h = new Date().getHours();
+  if (h < 10) return 'breakfast';
+  if (h < 14) return 'lunch';
+  if (h < 19) return 'dinner';
+  return 'snack';
+}
 
 export default function LogMeal() {
   const navigate = useNavigate();
   const fileRef = useRef(null);
   const [stage, setStage] = useState(STAGES.idle);
-  const [image, setImage] = useState(null); // { data, mime, preview }
+  const [image, setImage] = useState(null);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [mealType, setMealType] = useState(autoMealType());
-
-  function autoMealType() {
-    const h = new Date().getHours();
-    if (h < 10) return 'breakfast';
-    if (h < 14) return 'lunch';
-    if (h < 19) return 'dinner';
-    return 'snack';
-  }
+  const [dragging, setDragging] = useState(false);
 
   const processFile = (file) => {
     if (!file || !file.type.startsWith('image/')) { setError('Please upload an image file'); return; }
@@ -37,23 +40,12 @@ export default function LogMeal() {
       img.onload = () => {
         const canvas = document.createElement('canvas');
         const MAX_WIDTH = 1024;
-        let width = img.width;
-        let height = img.height;
-        
-        if (width > MAX_WIDTH) {
-          height = Math.round((height * MAX_WIDTH) / width);
-          width = MAX_WIDTH;
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        
+        let { width, height } = img;
+        if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
         const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-        const data = compressedDataUrl.split(',')[1];
-        
-        setImage({ data, mime: 'image/jpeg', preview: compressedDataUrl });
+        setImage({ data: compressedDataUrl.split(',')[1], mime: 'image/jpeg', preview: compressedDataUrl });
         setStage(STAGES.uploading);
       };
       img.src = e.target.result;
@@ -62,109 +54,95 @@ export default function LogMeal() {
   };
 
   const handleDrop = useCallback((e) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    processFile(file);
+    e.preventDefault(); setDragging(false);
+    processFile(e.dataTransfer.files[0]);
   }, []);
 
   const handleAnalyze = async () => {
     if (!image) return;
-    setStage(STAGES.analyzing);
-    setError('');
+    setStage(STAGES.analyzing); setError('');
     try {
-      const { data } = await axios.post(`${API}/meals`, {
-        imageData: image.data,
-        imageMimeType: image.mime,
-        mealType,
-        loggedAt: new Date().toISOString()
-      });
-      setResult(data);
-      setStage(STAGES.result);
+      const { data } = await axios.post(`${API}/meals`, { imageData: image.data, imageMimeType: image.mime, mealType, loggedAt: new Date().toISOString() });
+      setResult(data); setStage(STAGES.result);
     } catch (err) {
       setError(err?.response?.data?.message || 'Analysis failed. Please try again.');
       setStage(STAGES.uploading);
     }
   };
 
-  const reset = () => {
-    setStage(STAGES.idle);
-    setImage(null);
-    setResult(null);
-    setError('');
-  };
+  const reset = () => { setStage(STAGES.idle); setImage(null); setResult(null); setError(''); };
 
   if (stage === STAGES.result && result) {
-    return <ResultView meal={result.meal} analysis={result.analysis} onDone={() => navigate('/')} onAnother={reset} />;
+    return <ResultView meal={result.meal} onDone={() => navigate('/')} onAnother={reset} />;
   }
 
   return (
-    <div style={{ maxWidth: 640, margin: '0 auto' }} className="fade-in">
-      <div style={{ marginBottom: 40 }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 800, color: 'var(--text)', marginBottom: 8 }}>Log a Meal</h1>
-        <p style={{ color: 'var(--text3)', fontSize: 16, fontWeight: 500 }}>Take or upload a photo — our AI will identify nutrients automatically.</p>
+    <div className="max-w-2xl mx-auto animate-[fadeInUp_0.5s_ease-out_both]">
+      <div className="mb-8">
+        <h1 className="font-display text-4xl font-extrabold text-slate-800 tracking-tight mb-2">Log a Meal</h1>
+        <p className="text-slate-500 font-medium">Snap a photo — our AI identifies every food and calculates nutrition instantly.</p>
       </div>
 
-      {/* Meal type selector */}
-      <div style={{ marginBottom: 32 }}>
-        <label style={{ fontSize: 14, color: 'var(--text2)', fontWeight: 700, display: 'block', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Meal Type</label>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {['breakfast','lunch','dinner','snack'].map(t => (
-            <button key={t} onClick={() => setMealType(t)}
-              style={{
-                flex: 1, minWidth: 100, padding: '16px 8px', borderRadius: 16, border: '1px solid',
-                cursor: 'pointer', fontSize: 14, fontWeight: 700, transition: 'all 0.2s',
-                background: mealType === t ? `var(--${t === 'breakfast' ? 'amber' : t === 'lunch' ? 'blue' : t === 'dinner' ? 'purple' : 'teal'})` : 'var(--surface)',
-                borderColor: mealType === t ? 'transparent' : 'var(--border)',
-                color: mealType === t ? '#fff' : 'var(--text)',
-                textTransform: 'capitalize',
-                boxShadow: mealType === t ? `0 4px 12px var(--${t === 'breakfast' ? 'amber' : t === 'lunch' ? 'blue' : t === 'dinner' ? 'purple' : 'teal'})40` : 'none'
-              }}>
-              <div style={{ fontSize: 24, marginBottom: 8, filter: mealType !== t ? 'grayscale(1)' : 'none', opacity: mealType !== t ? 0.6 : 1 }}>{MEAL_EMOJI[t]}</div>
-              {t}
+      {/* Meal Type Selector */}
+      <div className="mb-8">
+        <label className="text-xs font-extrabold text-slate-400 uppercase tracking-widest block mb-3">Meal Type</label>
+        <div className="grid grid-cols-4 gap-3">
+          {MEAL_TYPES.map(({ id, label, emoji, color, active }) => (
+            <button key={id} onClick={() => setMealType(id)}
+              className={`flex flex-col items-center gap-2 py-4 rounded-[20px] border-2 font-bold text-sm transition-all duration-200 hover:scale-[1.03] ${mealType === id ? active : color}`}>
+              <span className="text-2xl">{emoji}</span>
+              {label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Upload area */}
+      {/* Upload / Preview Area */}
       {(stage === STAGES.idle || stage === STAGES.uploading) && (
         <div>
           {!image ? (
             <div
-              onDrop={handleDrop} onDragOver={e => e.preventDefault()}
+              onDrop={handleDrop}
+              onDragOver={e => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
               onClick={() => fileRef.current?.click()}
-              style={{
-                border: '2px dashed var(--border2)', borderRadius: 24, padding: '80px 40px',
-                textAlign: 'center', cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                background: 'var(--surface2)', display: 'flex', flexDirection: 'column', alignItems: 'center'
-              }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--lime)'; e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--surface2)'; e.currentTarget.style.boxShadow = 'none'; }}
+              className={`relative rounded-[28px] border-2 border-dashed p-16 text-center cursor-pointer transition-all duration-300 flex flex-col items-center gap-5
+                ${dragging ? 'border-blue-400 bg-blue-50 scale-[1.01]' : 'border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50'}`}
             >
-              <div style={{ width: 80, height: 80, background: 'var(--lime-glow2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, marginBottom: 24, border: '1px solid var(--lime-glow)' }}>📷</div>
-              <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 20, marginBottom: 8 }}>Drop photo here or click to upload</div>
-              <div style={{ color: 'var(--text3)', fontSize: 14, fontWeight: 500 }}>JPG, PNG, WEBP supported</div>
-              <input ref={fileRef} type="file" accept="image/*" style={{ display:'none' }}
-                onChange={e => processFile(e.target.files[0])} />
+              <div className={`w-20 h-20 rounded-3xl flex items-center justify-center transition-all ${dragging ? 'bg-blue-100' : 'bg-slate-100'}`}>
+                <Camera className={`w-9 h-9 ${dragging ? 'text-blue-500' : 'text-slate-400'}`} />
+              </div>
+              <div>
+                <div className="font-display font-bold text-xl text-slate-700 mb-2">
+                  {dragging ? 'Drop it here!' : 'Drop your photo here'}
+                </div>
+                <div className="text-slate-400 text-sm font-medium">or click to browse · JPG, PNG, WEBP</div>
+              </div>
+              <div className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-md hover:-translate-y-0.5 transition-transform">
+                <Upload className="w-4 h-4" />
+                Choose Photo
+              </div>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => processFile(e.target.files[0])} />
             </div>
           ) : (
-            <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
-              <div style={{ position: 'relative' }}>
-                <img src={image.preview} alt="Meal" style={{ width: '100%', maxHeight: 400, objectFit: 'cover', display: 'block' }} />
-                <button onClick={reset} style={{
-                  position: 'absolute', top: 16, right: 16, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
-                  border: 'none', color: '#fff', borderRadius: '50%', width: 36, height: 36,
-                  cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'background 0.2s'
-                }} onMouseEnter={e => e.currentTarget.style.background='rgba(0,0,0,0.8)'} onMouseLeave={e => e.currentTarget.style.background='rgba(0,0,0,0.6)'}>×</button>
-              </div>
-              <div style={{ padding: '24px 32px' }}>
-                <div style={{ fontSize: 15, color: 'var(--text)', fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ color: 'var(--lime-dim)' }}>✓</span> Image ready for analysis
+            <div className="bg-white rounded-[28px] overflow-hidden shadow-[0_8px_30px_-8px_rgba(0,0,0,0.08)] border border-slate-100">
+              <div className="relative">
+                <img src={image.preview} alt="Meal" className="w-full max-h-80 object-cover" />
+                <button onClick={reset} className="absolute top-4 right-4 w-9 h-9 bg-black/60 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/80 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+                <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-sm font-bold text-slate-700">Photo ready</span>
                 </div>
-                {error && <div style={{ color: 'var(--coral)', fontSize: 14, fontWeight: 500, marginBottom: 16, background: 'rgba(239,68,68,0.1)', padding: '12px', borderRadius: 8 }}>{error}</div>}
-                <button className="btn btn-lime" onClick={handleAnalyze} style={{ width: '100%', padding: '16px', borderRadius: 12, fontSize: 16, marginTop: 12 }}>
-                  🔍 Analyze with AI
+              </div>
+              <div className="p-6">
+                {error && <div className="bg-red-50 text-red-600 text-sm font-semibold px-4 py-3 rounded-xl mb-4 border border-red-100">{error}</div>}
+                <button onClick={handleAnalyze}
+                  className="w-full flex items-center justify-center gap-3 bg-slate-900 text-white py-4 rounded-2xl font-bold text-base shadow-lg hover:bg-slate-700 hover:-translate-y-0.5 transition-all duration-200">
+                  <Sparkles className="w-5 h-5 text-blue-400" />
+                  Analyze with AI
+                  <ArrowRight className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -172,26 +150,24 @@ export default function LogMeal() {
         </div>
       )}
 
-      {/* Analyzing state */}
+      {/* Analyzing State */}
       {stage === STAGES.analyzing && (
-        <div className="glass-panel" style={{ textAlign: 'center', padding: '60px 40px', position: 'relative', overflow: 'hidden' }}>
-          <img src={image.preview} alt="Meal" style={{ width: '100%', maxHeight: 240, objectFit: 'cover', borderRadius: 16, marginBottom: 32, opacity: 0.5, filter: 'blur(2px)' }} />
-          
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(var(--bg-rgb), 0.5)' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-              <div className="spinner" style={{ width: 48, height: 48, borderWidth: 4 }} />
-            </div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 800, color: 'var(--text)', marginBottom: 8 }}>Analyzing your meal...</div>
-            <div style={{ color: 'var(--text3)', fontSize: 15, fontWeight: 500 }}>Our AI is identifying foods and calculating nutrition</div>
-            
-            <div style={{ display: 'flex', gap: 24, justifyContent: 'center', marginTop: 40 }}>
-              {['Detecting foods', 'Estimating portions', 'Calculating macros'].map((s, i) => (
-                <div key={s} style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600, textAlign: 'center' }}>
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--lime)', margin: '0 auto 8px', animation: `pulse-lime 1.5s ease ${i * 0.4}s infinite` }} />
-                  {s}
-                </div>
-              ))}
-            </div>
+        <div className="bg-white rounded-[28px] overflow-hidden shadow-[0_8px_30px_-8px_rgba(0,0,0,0.08)] border border-slate-100 text-center p-12">
+          <div className="relative w-full mb-8">
+            <img src={image.preview} alt="Meal" className="w-full max-h-52 object-cover rounded-2xl opacity-40 blur-[2px]" />
+          </div>
+          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-5">
+            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+          </div>
+          <h2 className="font-display font-extrabold text-2xl text-slate-800 mb-2">Analyzing your meal…</h2>
+          <p className="text-slate-500 font-medium mb-8">Our AI is identifying every food item and computing your macros</p>
+          <div className="flex justify-center gap-8">
+            {['Detecting foods', 'Estimating portions', 'Calculating macros'].map((s, i) => (
+              <div key={s} className="flex flex-col items-center gap-2 text-xs font-bold text-slate-500">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.2}s` }} />
+                {s}
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -199,73 +175,66 @@ export default function LogMeal() {
   );
 }
 
-function ResultView({ meal, analysis, onDone, onAnother }) {
+function ResultView({ meal, onDone, onAnother }) {
   const n = meal.nutrition || {};
   return (
-    <div style={{ maxWidth: 700, margin: '0 auto' }} className="fade-in">
-      <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+    <div className="max-w-2xl mx-auto animate-[fadeInUp_0.5s_ease-out_both]">
+      <div className="flex items-center gap-4 mb-8">
+        <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
+          <CheckCircle className="w-6 h-6 text-green-500" />
+        </div>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8 }}>
-            <div style={{ width: 40, height: 40, background: 'var(--lime)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontSize: 20, boxShadow: '0 4px 12px var(--lime-glow)' }}>✓</div>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, color: 'var(--text)' }}>Meal Logged!</h1>
-          </div>
-          <p style={{ color: 'var(--text3)', fontSize: 16, fontWeight: 500 }}>Successfully added to your daily tracker.</p>
+          <h1 className="font-display text-3xl font-extrabold text-slate-800 leading-none">Meal Logged!</h1>
+          <p className="text-slate-500 font-medium mt-1">Added to your daily tracker.</p>
         </div>
-        <div style={{ background: 'var(--surface)', padding: '8px 16px', borderRadius: 100, border: '1px solid var(--border)', fontSize: 13, fontWeight: 600, color: 'var(--text2)' }}>
-          AI Confidence: <span style={{ color: 'var(--lime-dim)' }}>{meal.aiConfidence}%</span>
+        <div className="ml-auto bg-green-50 border border-green-100 text-green-700 text-sm font-bold px-3 py-1.5 rounded-full">
+          {meal.aiConfidence}% confidence
         </div>
       </div>
 
-      <div className="glass-panel" style={{ marginBottom: 24, padding: 0, overflow: 'hidden' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-          <div style={{ flex: '1 1 300px', position: 'relative' }}>
-             <img src={`data:${meal.imageMimeType};base64,${meal.imageData}`} alt={meal.name}
-              style={{ width: '100%', height: '100%', minHeight: 240, objectFit: 'cover', display: 'block' }} />
-             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)', padding: '40px 20px 20px' }}>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: '#fff', marginBottom: 4 }}>{meal.name}</div>
-                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 15 }}>{meal.description}</div>
-             </div>
+      {/* Hero card */}
+      <div className="bg-white rounded-[28px] overflow-hidden shadow-[0_8px_30px_-8px_rgba(0,0,0,0.08)] border border-slate-100 mb-5">
+        <div className="relative">
+          <img src={`data:${meal.imageMimeType};base64,${meal.imageData}`} alt={meal.name} className="w-full h-56 object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
+            <h2 className="font-display text-2xl font-extrabold text-white">{meal.name}</h2>
+            {meal.description && <p className="text-white/80 text-sm font-medium mt-1">{meal.description}</p>}
           </div>
-          
-          <div style={{ flex: '1 1 300px', padding: '32px' }}>
-            <div style={{ fontSize: 14, color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 16 }}>Nutrition Summary</div>
-            
-            {/* Big calorie */}
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 32 }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 56, fontWeight: 800, color: 'var(--lime-dim)', lineHeight: 1 }}>{Math.round(n.calories || 0)}</div>
-              <div style={{ color: 'var(--text2)', fontSize: 18, fontWeight: 600 }}>kcal</div>
-            </div>
+        </div>
 
-            {/* Macros grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-              {[
-                ['Protein', n.protein, 'var(--blue)'],
-                ['Carbs', n.carbs, 'var(--amber)'],
-                ['Fat', n.fat, 'var(--purple)'],
-                ['Fiber', n.fiber, 'var(--teal)'],
-              ].map(([label, val, color]) => (
-                <div key={label} style={{ background: 'var(--surface)', borderRadius: 12, padding: '16px', border: '1px solid var(--border)' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 800, color }}>{Math.round(val || 0)}<span style={{ fontSize: 14 }}>g</span></div>
-                  <div style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 600, marginTop: 4 }}>{label}</div>
-                </div>
-              ))}
-            </div>
+        <div className="p-6">
+          <div className="flex items-baseline gap-2 mb-6">
+            <span className="font-display font-extrabold text-6xl text-slate-800">{Math.round(n.calories || 0)}</span>
+            <span className="text-xl text-slate-400 font-semibold">kcal</span>
+          </div>
+          <div className="grid grid-cols-4 gap-3">
+            {[
+              { label: 'Protein', value: n.protein, color: 'bg-blue-50 text-blue-700' },
+              { label: 'Carbs',   value: n.carbs,   color: 'bg-amber-50 text-amber-700' },
+              { label: 'Fat',     value: n.fat,     color: 'bg-purple-50 text-purple-700' },
+              { label: 'Fiber',   value: n.fiber,   color: 'bg-green-50 text-green-700' },
+            ].map(({ label, value, color }) => (
+              <div key={label} className={`${color} rounded-2xl p-3 text-center`}>
+                <div className="font-display font-extrabold text-xl">{Math.round(value || 0)}<span className="text-xs font-bold">g</span></div>
+                <div className="text-xs font-bold uppercase tracking-wider opacity-70 mt-0.5">{label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Foods breakdown */}
+      {/* Detected foods */}
       {meal.foods?.length > 0 && (
-        <div className="card" style={{ marginBottom: 24, padding: '24px' }}>
-          <div style={{ fontSize: 14, color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 16 }}>Foods Detected</div>
-          <div style={{ background: 'var(--surface2)', borderRadius: 12, border: '1px solid var(--border)', overflow: 'hidden' }}>
+        <div className="bg-white rounded-[28px] p-6 shadow-[0_8px_30px_-8px_rgba(0,0,0,0.06)] border border-slate-100 mb-5">
+          <div className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-4">Detected Foods</div>
+          <div className="flex flex-col gap-1">
             {meal.foods.map((food, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: i < meal.foods.length-1 ? '1px solid var(--border)' : 'none' }}>
+              <div key={i} className="flex justify-between items-center py-3 border-b border-slate-50 last:border-0">
                 <div>
-                  <div style={{ fontSize: 16, color: 'var(--text)', fontWeight: 600, marginBottom: 4 }}>{food.name}</div>
-                  <div style={{ fontSize: 14, color: 'var(--text3)', fontWeight: 500 }}>{food.portion}</div>
+                  <div className="font-bold text-slate-700">{food.name}</div>
+                  <div className="text-xs text-slate-400 font-medium">{food.portion}</div>
                 </div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--lime-dim)' }}>{Math.round(food.nutrition?.calories || 0)} <span style={{ fontSize: 13, color: 'var(--text3)' }}>kcal</span></div>
+                <div className="font-extrabold text-slate-800">{Math.round(food.nutrition?.calories || 0)}<span className="text-slate-400 font-semibold text-xs ml-1">kcal</span></div>
               </div>
             ))}
           </div>
@@ -273,17 +242,19 @@ function ResultView({ meal, analysis, onDone, onAnother }) {
       )}
 
       {meal.aiNotes && (
-        <div style={{ background: 'var(--lime-glow2)', border: '1px solid var(--lime-glow)', borderRadius: 12, padding: '16px 20px', marginBottom: 24, fontSize: 14, color: 'var(--text)', fontWeight: 500 }}>
-          <strong style={{ color: 'var(--lime-dim)', marginRight: 8 }}>⚡ AI Note:</strong> {meal.aiNotes}
+        <div className="bg-blue-50 border border-blue-100 text-blue-800 rounded-2xl p-4 mb-5 text-sm font-medium">
+          <span className="font-bold">AI Note: </span>{meal.aiNotes}
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 16 }}>
-        <button className="btn btn-ghost" onClick={onAnother} style={{ flex: 1, padding: '16px', fontSize: 16 }}>Log Another Meal</button>
-        <button className="btn btn-lime" onClick={onDone} style={{ flex: 1, padding: '16px', fontSize: 16 }}>Back to Dashboard</button>
+      <div className="flex gap-3">
+        <button onClick={onAnother} className="flex-1 py-4 rounded-2xl border-2 border-slate-200 font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+          Log Another
+        </button>
+        <button onClick={onDone} className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-700 hover:-translate-y-0.5 transition-all shadow-md">
+          Back to Dashboard
+        </button>
       </div>
     </div>
   );
 }
-
-const MEAL_EMOJI = { breakfast: '🌅', lunch: '☀️', dinner: '🌙', snack: '🍎' };
