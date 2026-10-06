@@ -7,6 +7,6 @@ RUN npm ci --only=production
 
 COPY . .
 
-EXPOSE 7860
+EXPOSE 5000
 
 CMD ["node", "server.js"]

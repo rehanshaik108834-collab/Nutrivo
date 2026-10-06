@@ -5,6 +5,8 @@
 
   <p>
     <a href="https://reactjs.org/"><img src="https://img.shields.io/badge/React-18-blue.svg?style=flat-square&logo=react" alt="React" /></a>
+    <a href="https://vitejs.dev/"><img src="https://img.shields.io/badge/Vite-5-646CFF.svg?style=flat-square&logo=vite" alt="Vite" /></a>
+    <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind-CSS-38B2AC.svg?style=flat-square&logo=tailwind-css" alt="Tailwind" /></a>
     <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-Backend-green.svg?style=flat-square&logo=node.js" alt="Node" /></a>
     <a href="https://www.mongodb.com/"><img src="https://img.shields.io/badge/MongoDB-Database-47A248.svg?style=flat-square&logo=mongodb" alt="MongoDB" /></a>
     <a href="https://groq.com/"><img src="https://img.shields.io/badge/AI-Groq%20Vision-orange.svg?style=flat-square" alt="Groq Vision" /></a>
@@ -20,9 +22,9 @@ Nutrivo is a premium, AI-powered nutrition tracking application. Instead of manu
 ## ✨ Key Features
 
 - **📸 AI Photo Analysis**: Upload any meal photo, and our Vision AI will identify all food items, estimate portion sizes, and calculate exact calories, protein, carbs, fat, fiber, and more.
-- **🎨 Premium UI/UX**: A stunning, modern, glassmorphism-inspired design with buttery smooth animations, interactive charts, and full Light/Dark mode support.
-- **📊 Advanced Analytics**: Visualize your nutrition journey with beautiful weekly and monthly charts. Track your daily streaks and see average macro breakdowns.
-- **🎯 Personalized Goals**: Set custom daily targets for calories and all major macronutrients based on your personal fitness goals (lose, maintain, or gain weight).
+- **🎨 Premium Bento UI**: A stunning, modern, bento-box-inspired design built with Tailwind CSS, featuring buttery smooth micro-animations and interactive SVG data charts.
+- **📊 Advanced Analytics**: Visualize your nutrition journey with beautiful weekly and monthly area charts, daily bar charts, and macro-split pie charts using Recharts.
+- **🎯 Personalized Goals**: Set custom daily targets for calories and all major macronutrients based on your personal fitness goals.
 - **🔒 Secure Authentication**: Full user account system with JWT-based authentication to keep your health data private and secure.
 
 ---
@@ -30,18 +32,16 @@ Nutrivo is a premium, AI-powered nutrition tracking application. Instead of manu
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **React 18** — Modern UI framework
-- **Vanilla CSS** — Custom premium styling with CSS Variables and Light/Dark themes
+- **React 18 & Vite** — Blazing fast modern UI framework and bundler
+- **Tailwind CSS** — Utility-first styling for the premium light-mode bento aesthetic
 - **Recharts** — Interactive, animated data visualization
-- **Framer Motion** — Smooth micro-animations and page transitions
-- **React Dropzone** — Seamless drag-and-drop image uploads
+- **Lucide React** — Crisp, professional iconography
 
 ### Backend
 - **Node.js & Express** — High-performance RESTful API
 - **MongoDB (Mongoose)** — Flexible, scalable NoSQL database
-- **Groq SDK** — Lightning-fast AI inference using Llama Vision models
+- **Groq SDK** — Lightning-fast AI inference using Llama 3 Vision
 - **JWT & Bcrypt** — Secure user authentication and password hashing
-- **Multer** — Handling image processing streams
 
 ---
 
@@ -62,16 +62,14 @@ cd Nutrivo
 ```bash
 cd backend
 npm install
-
-# Create environment variables file
 cp .env.example .env
 ```
-Edit the `.env` file and add your credentials:
+Edit the backend `.env` file:
 ```env
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/nutrivo
 JWT_SECRET=your_super_secret_key_here
-GROQ_API_KEY=gsk_your_api_key_here
+GEMINI_API_KEY=your_api_key_here
 CLIENT_URL=http://localhost:3000
 ```
 Start the backend server:
@@ -84,41 +82,45 @@ Open a new terminal window:
 ```bash
 cd frontend
 npm install
-npm start
 ```
-The application will launch at `http://localhost:3000`.
+Create a `.env` file in the frontend folder if needed, or rely on defaults:
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+Start the Vite dev server:
+```bash
+npm run dev
+```
+The application will launch at `http://localhost:3000` (or `http://localhost:5173`).
+
+---
+
+## 🐳 Docker Support
+
+You can run the entire stack (MongoDB, Backend, Frontend) with a single command:
+```bash
+docker-compose up --build
+```
+Ensure your `backend/.env` file is configured correctly first!
 
 ---
 
 ## 🌍 Production Deployment
 
-Nutrivo is perfectly configured for modern cloud deployment. 
+Nutrivo is configured for modern cloud deployment.
 
-### 1. Backend (HuggingFace Spaces - Docker)
-1. Create a new Space on [HuggingFace](https://huggingface.co/spaces) (Docker SDK).
-2. Push the `/backend` directory to your Space.
-3. Add your environment variables (`MONGODB_URI`, `JWT_SECRET`, `GROQ_API_KEY`, `CLIENT_URL`) as Secrets in the Space Settings.
-4. The included `Dockerfile` and `README.md` metadata will automatically build and run your API on port 7860.
+### 1. Backend
+- Deploy your backend to any Docker-supported host (Render, Fly.io, etc.).
+- Ensure environment variables are set.
 
 ### 2. Frontend (Vercel)
 1. Import the repository into [Vercel](https://vercel.com).
-2. Set the Root Directory to `frontend`.
-3. Add the `REACT_APP_API_URL` environment variable pointing to your HuggingFace Space URL (e.g., `https://your-space-name.hf.space/api`).
-4. Click Deploy.
-
----
-
-## 🤖 AI Prompt Engineering
-
-Nutrivo utilizes a highly structured prompt to guide the Vision AI:
-1. Identify all visible ingredients.
-2. Estimate absolute weights/portions based on plate sizing context.
-3. Enforce a strict JSON output schema.
-4. Calculate comprehensive macro and micronutrients.
-5. Provide an AI Confidence Score (0-100) based on image clarity.
+2. Set the Framework Preset to **Vite**.
+3. Add the `VITE_API_URL` environment variable pointing to your deployed backend URL.
+4. Set the Root Directory to `frontend` and click Deploy.
 
 ---
 
 <div align="center">
-  <p>Built by Rehan</p>
+  <p>Built with ❤️</p>
 </div>
