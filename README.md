@@ -9,19 +9,19 @@
     <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind-CSS-38B2AC.svg?style=flat-square&logo=tailwind-css" alt="Tailwind" /></a>
     <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-Backend-green.svg?style=flat-square&logo=node.js" alt="Node" /></a>
     <a href="https://www.mongodb.com/"><img src="https://img.shields.io/badge/MongoDB-Database-47A248.svg?style=flat-square&logo=mongodb" alt="MongoDB" /></a>
-    <a href="https://groq.com/"><img src="https://img.shields.io/badge/AI-Groq%20Vision-orange.svg?style=flat-square" alt="Groq Vision" /></a>
+    <a href="https://ai.google.dev/"><img src="https://img.shields.io/badge/AI-Google%20Gemini%20Vision-blue.svg?style=flat-square" alt="Gemini Vision" /></a>
   </p>
 </div>
 
 <br />
 
-Nutrivo is a premium, AI-powered nutrition tracking application. Instead of manually searching for foods and estimating portion sizes, simply upload a photo of your meal. Nutrivo uses state-of-the-art **Llama 3 Vision AI via Groq** to instantly analyze your food, extract precise nutritional data, and log it to your daily goals.
+Nutrivo is a premium, AI-powered nutrition tracking application. Instead of manually searching for foods and estimating portion sizes, simply upload a photo of your meal. Nutrivo uses state-of-the-art **Google Gemini Vision AI** to instantly analyze your food, extract precise nutritional data, and log it to your daily goals.
 
 ---
 
 ## ✨ Key Features
 
-- **📸 AI Photo Analysis**: Upload any meal photo, and our Vision AI will identify all food items, estimate portion sizes, and calculate exact calories, protein, carbs, fat, fiber, and more.
+- **📸 AI Photo Analysis**: Upload any meal photo, and our Gemini Vision AI will identify all food items, estimate portion sizes, and calculate exact calories, protein, carbs, fat, fiber, and more.
 - **🎨 Premium Bento UI**: A stunning, modern, bento-box-inspired design built with Tailwind CSS, featuring buttery smooth micro-animations and interactive SVG data charts.
 - **📊 Advanced Analytics**: Visualize your nutrition journey with beautiful weekly and monthly area charts, daily bar charts, and macro-split pie charts using Recharts.
 - **🎯 Personalized Goals**: Set custom daily targets for calories and all major macronutrients based on your personal fitness goals.
@@ -40,7 +40,7 @@ Nutrivo is a premium, AI-powered nutrition tracking application. Instead of manu
 ### Backend
 - **Node.js & Express** — High-performance RESTful API
 - **MongoDB (Mongoose)** — Flexible, scalable NoSQL database
-- **Groq SDK** — Lightning-fast AI inference using Llama 3 Vision
+- **Google Generative AI SDK** — Lightning-fast AI inference using Gemini Vision models
 - **JWT & Bcrypt** — Secure user authentication and password hashing
 
 ---
@@ -50,7 +50,7 @@ Nutrivo is a premium, AI-powered nutrition tracking application. Instead of manu
 ### 1. Prerequisites
 - Node.js (v18+)
 - Local MongoDB instance (or MongoDB Atlas URI)
-- [Groq API Key](https://console.groq.com) (Free)
+- [Google Gemini API Key](https://aistudio.google.com/) (Free)
 
 ### 2. Clone the Repository
 ```bash
@@ -69,7 +69,7 @@ Edit the backend `.env` file:
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/nutrivo
 JWT_SECRET=your_super_secret_key_here
-GEMINI_API_KEY=your_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
 CLIENT_URL=http://localhost:3000
 ```
 Start the backend server:
