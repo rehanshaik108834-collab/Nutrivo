@@ -33,9 +33,30 @@ export default function LogMeal() {
     setError('');
     const reader = new FileReader();
     reader.onload = (e) => {
-      const data = e.target.result.split(',')[1];
-      setImage({ data, mime: file.type, preview: e.target.result });
-      setStage(STAGES.uploading);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1024;
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        const data = compressedDataUrl.split(',')[1];
+        
+        setImage({ data, mime: 'image/jpeg', preview: compressedDataUrl });
+        setStage(STAGES.uploading);
+      };
+      img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   };
