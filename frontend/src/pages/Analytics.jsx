@@ -3,14 +3,15 @@ import axios from 'axios';
 import { API, useAuth } from '../context/AuthContext';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, Legend, ReferenceLine
+  ResponsiveContainer, PieChart, Pie, Cell, ReferenceLine
 } from 'recharts';
 import { TrendingUp, Flame, Beef, Wheat, Droplets } from 'lucide-react';
 
 const MACRO_COLORS = { calories: '#60a5fa', protein: '#a78bfa', carbs: '#fbbf24', fat: '#f472b6', fiber: '#34d399' };
-const PIE_COLORS = ['#60a5fa', '#fbbf24', '#a78bfa', '#34d399'];
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const PIE_COLORS   = ['#60a5fa', '#fbbf24', '#a78bfa', '#34d399'];
+const MONTHS       = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+/* ─── Shared tooltip ─── */
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
@@ -25,47 +26,66 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
+/* ─── Clean average stat card (no goal comparison) ─── */
+function AvgCard({ label, value, unit, color, bg, text }) {
+  return (
+    <div className={`${bg} rounded-[24px] p-5`}>
+      <div className={`text-xs font-bold uppercase tracking-wider ${text} opacity-70 mb-3`}>{label}</div>
+      <div className={`font-display font-extrabold text-2xl ${text}`}>
+        {value}<span className="text-sm font-semibold opacity-60 ml-1">{unit}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function Analytics() {
   const { user } = useAuth();
-  const [view, setView] = useState('weekly');
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [view, setView]               = useState('weekly');
+  const [data, setData]               = useState(null);
+  const [loading, setLoading]         = useState(true);
+  const [month, setMonth]             = useState(new Date().getMonth() + 1);
+  const [year, setYear]               = useState(new Date().getFullYear());
   const [activeMacro, setActiveMacro] = useState('calories');
   const [waterHistory, setWaterHistory] = useState([]);
   const [waterLoading, setWaterLoading] = useState(true);
 
+  // Refetch nutrition data when view/month/year changes
   useEffect(() => { fetchData(); }, [view, month, year]);
-  useEffect(() => { fetchWaterHistory(); }, []);
+
+  // Refetch water history when view/month/year changes
+  useEffect(() => { fetchWater(); }, [view, month, year]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      if (view === 'weekly') {
-        const { data: d } = await axios.get(`${API}/analytics/weekly`);
-        setData(d);
-      } else {
-        const { data: d } = await axios.get(`${API}/analytics/monthly?month=${month}&year=${year}`);
-        setData(d);
-      }
+      const url = view === 'weekly'
+        ? `${API}/analytics/weekly`
+        : `${API}/analytics/monthly?month=${month}&year=${year}`;
+      const { data: d } = await axios.get(url);
+      setData(d);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
 
-  const fetchWaterHistory = async () => {
+  const fetchWater = async () => {
     setWaterLoading(true);
     try {
-      const { data: d } = await axios.get(`${API}/water/history?days=7`);
+      const url = view === 'weekly'
+        ? `${API}/water/history?days=7`
+        : `${API}/water/history?month=${month}&year=${year}`;
+      const { data: d } = await axios.get(url);
       setWaterHistory(d.history || []);
     } catch (err) { console.error(err); }
     finally { setWaterLoading(false); }
   };
 
-  const goals = user?.goals || { calories: 2000, protein: 150, carbs: 250, fat: 65 };
+  const goals = user?.goals || { calories: 2000, protein: 150, carbs: 250, fat: 65, water: 2500 };
 
-  const chartData = data ? (data.days || []).map(d => ({
-    name: d.label,
+  // Build chart data with proper labels per view
+  const chartData = data ? (data.days || []).map((d, i) => ({
+    name: view === 'weekly'
+      ? d.label  // Already short day name from backend
+      : d.label, // For monthly, backend should give "Oct 1" etc.
     calories: Math.round(d.nutrition?.calories || 0),
     protein:  Math.round(d.nutrition?.protein  || 0),
     carbs:    Math.round(d.nutrition?.carbs    || 0),
@@ -73,18 +93,20 @@ export default function Analytics() {
     fiber:    Math.round(d.nutrition?.fiber    || 0),
   })) : [];
 
-  const avgData = chartData.length
+  // Average only over days that actually have data
+  const activeDays = chartData.filter(d => d.calories > 0);
+  const avgData = activeDays.length
     ? Object.fromEntries(['calories','protein','carbs','fat','fiber'].map(k => [
-        k, chartData.reduce((a, d) => a + d[k], 0) / (chartData.filter(d => d.calories > 0).length || 1)
+        k, Math.round(activeDays.reduce((a, d) => a + d[k], 0) / activeDays.length)
       ]))
     : { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 
-  const totalDaysLogged = chartData.filter(d => d.calories > 0).length;
+  const totalDaysLogged = activeDays.length;
 
   const macroSummary = [
-    { name: 'Protein', value: Math.round(data?.summary?.avgNutrition?.protein || avgData.protein || 0), fill: MACRO_COLORS.protein },
-    { name: 'Carbs',   value: Math.round(data?.summary?.avgNutrition?.carbs   || avgData.carbs   || 0), fill: MACRO_COLORS.carbs   },
-    { name: 'Fat',     value: Math.round(data?.summary?.avgNutrition?.fat     || avgData.fat     || 0), fill: MACRO_COLORS.fat     },
+    { name: 'Protein', value: avgData.protein || 0, fill: MACRO_COLORS.protein },
+    { name: 'Carbs',   value: avgData.carbs   || 0, fill: MACRO_COLORS.carbs   },
+    { name: 'Fat',     value: avgData.fat     || 0, fill: MACRO_COLORS.fat     },
   ];
 
   const mealPie = data?.mealTypeDistribution
@@ -98,14 +120,27 @@ export default function Analytics() {
     { key: 'fat',      label: 'Fat',      icon: Droplets },
   ];
 
+  // Average water
+  const avgWater = waterHistory.length
+    ? Math.round(waterHistory.reduce((a, d) => a + d.totalMl, 0) / waterHistory.length)
+    : 0;
+  const bestWater = waterHistory.length ? Math.max(...waterHistory.map(d => d.totalMl)) : 0;
+
+  // For monthly calorie chart, show every 3rd/5th label to avoid crowding
+  const tickInterval = view === 'monthly' ? 4 : 0;
+
+  const periodLabel = view === 'weekly'
+    ? 'Last 7 Days'
+    : `${MONTHS[month - 1]} ${year}`;
+
   return (
     <div className="max-w-5xl mx-auto animate-[fadeInUp_0.5s_ease-out_both]">
       <div className="mb-8">
         <h1 className="font-display text-4xl font-extrabold text-slate-800 tracking-tight mb-2">Analytics</h1>
-        <p className="text-slate-500 font-medium">Track your nutrition trends and progress towards your goals.</p>
+        <p className="text-slate-500 font-medium">Track your nutrition trends and hydration over time.</p>
       </div>
 
-      {/* Period Toggle */}
+      {/* ── Period Toggle ── */}
       <div className="flex flex-wrap gap-3 items-center mb-8">
         <div className="flex bg-white rounded-2xl p-1.5 shadow-sm border border-slate-100">
           {['weekly', 'monthly'].map(v => (
@@ -136,7 +171,7 @@ export default function Analytics() {
       ) : (
         <div className="flex flex-col gap-5">
 
-          {/* ── Trend Area Chart ── */}
+          {/* ── Calorie Intake Trend Area Chart ── */}
           <div className="bg-white rounded-[28px] p-7 shadow-[0_8px_30px_-8px_rgba(0,0,0,0.06)] border border-slate-100">
             <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
               <div>
@@ -144,18 +179,14 @@ export default function Analytics() {
                   <TrendingUp className="w-5 h-5 text-blue-400" />
                   <span className="capitalize">{activeMacro}</span> Intake Trend
                 </h2>
-                <p className="text-slate-400 text-sm font-medium mt-1">
-                  {view === 'weekly' ? 'Last 7 days' : `${MONTHS[month - 1]} ${year}`}
-                </p>
+                <p className="text-slate-400 text-sm font-medium mt-1">{periodLabel}</p>
               </div>
               <div className="text-right">
                 <div className="font-display font-extrabold text-3xl leading-none" style={{ color: MACRO_COLORS[activeMacro] }}>
-                  {Math.round(avgData[activeMacro] || 0)}
+                  {avgData[activeMacro] || 0}
                   <span className="text-sm text-slate-400 font-semibold ml-1">{activeMacro === 'calories' ? 'kcal avg' : 'g avg'}</span>
                 </div>
-                <div className="text-xs text-slate-400 font-semibold mt-1">
-                  Goal: {goals[activeMacro] || '—'}{activeMacro === 'calories' ? ' kcal' : 'g'}
-                </div>
+                <div className="text-xs text-slate-400 font-semibold mt-1">{totalDaysLogged} days with data</div>
               </div>
             </div>
 
@@ -179,11 +210,11 @@ export default function Analytics() {
                   <defs>
                     <linearGradient id={`grad-${activeMacro}`} x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%"  stopColor={MACRO_COLORS[activeMacro]} stopOpacity={0.25} />
-                      <stop offset="95%" stopColor={MACRO_COLORS[activeMacro]} stopOpacity={0} />
+                      <stop offset="95%" stopColor={MACRO_COLORS[activeMacro]} stopOpacity={0}    />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} interval={tickInterval} />
                   <YAxis tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <Tooltip content={<CustomTooltip />} />
                   <Area type="monotone" dataKey={activeMacro} stroke={MACRO_COLORS[activeMacro]} strokeWidth={3}
@@ -195,57 +226,31 @@ export default function Analytics() {
             )}
           </div>
 
-          {/* ── Avg Macro + Water Stat Cards ── */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {[
-              { label: 'Avg Calories', key: 'calories', unit: 'kcal', color: '#60a5fa', bg: 'bg-blue-50',   text: 'text-blue-700'   },
-              { label: 'Avg Protein',  key: 'protein',  unit: 'g',    color: '#a78bfa', bg: 'bg-purple-50', text: 'text-purple-700' },
-              { label: 'Avg Carbs',    key: 'carbs',    unit: 'g',    color: '#fbbf24', bg: 'bg-amber-50',  text: 'text-amber-700'  },
-              { label: 'Avg Fat',      key: 'fat',      unit: 'g',    color: '#f472b6', bg: 'bg-pink-50',   text: 'text-pink-700'   },
-            ].map(({ label, key, unit, color, bg, text }) => {
-              const value = Math.round(avgData[key] || 0);
-              const pct = Math.min(Math.round((value / Math.max(goals[key] || 1, 1)) * 100), 100);
-              return (
-                <div key={label} className={`${bg} rounded-[24px] p-5`}>
-                  <div className={`text-xs font-bold uppercase tracking-wider ${text} opacity-70 mb-2`}>{label}</div>
-                  <div className={`font-display font-extrabold text-2xl ${text} mb-3`}>
-                    {value}<span className="text-sm font-semibold opacity-60 ml-1">{unit}</span>
-                  </div>
-                  <div className="h-1.5 bg-white/60 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%`, background: color }} />
-                  </div>
-                  <div className={`text-xs ${text} opacity-60 font-semibold mt-1.5`}>{pct}% of goal</div>
-                </div>
-              );
-            })}
-
-            {/* Water Card */}
-            {(() => {
-              const avgWater = waterHistory.length
-                ? Math.round(waterHistory.reduce((a, d) => a + d.totalMl, 0) / waterHistory.length)
-                : 0;
-              const waterGoal = goals.water || 2500;
-              const pct = Math.min(Math.round((avgWater / waterGoal) * 100), 100);
-              return (
-                <div className="bg-blue-50 rounded-[24px] p-5">
-                  <div className="text-xs font-bold uppercase tracking-wider text-blue-700 opacity-70 mb-2">Avg Water</div>
-                  <div className="font-display font-extrabold text-2xl text-blue-700 mb-3">
-                    {avgWater >= 1000 ? `${(avgWater / 1000).toFixed(1)}L` : `${avgWater}`}
-                    <span className="text-sm font-semibold opacity-60 ml-1">{avgWater < 1000 ? 'ml' : ''}</span>
-                  </div>
-                  <div className="h-1.5 bg-white/60 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%`, background: '#60a5fa' }} />
-                  </div>
-                  <div className="text-xs text-blue-700 opacity-60 font-semibold mt-1.5">{pct}% of goal</div>
-                </div>
-              );
-            })()}
+          {/* ── Average Stat Cards ── */}
+          <div>
+            <p className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-3">
+              {view === 'weekly' ? 'Weekly Averages' : `${MONTHS[month - 1]} ${year} Averages`}
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <AvgCard label="Avg Calories" value={avgData.calories || 0} unit="kcal" color="#60a5fa" bg="bg-blue-50"   text="text-blue-700"   />
+              <AvgCard label="Avg Protein"  value={avgData.protein  || 0} unit="g"    color="#a78bfa" bg="bg-purple-50" text="text-purple-700" />
+              <AvgCard label="Avg Carbs"    value={avgData.carbs    || 0} unit="g"    color="#fbbf24" bg="bg-amber-50"  text="text-amber-700"  />
+              <AvgCard label="Avg Fat"      value={avgData.fat      || 0} unit="g"    color="#f472b6" bg="bg-pink-50"   text="text-pink-700"   />
+              <AvgCard
+                label="Avg Water"
+                value={avgWater >= 1000 ? `${(avgWater / 1000).toFixed(1)}` : avgWater}
+                unit={avgWater >= 1000 ? 'L' : 'ml'}
+                color="#60a5fa"
+                bg="bg-sky-50"
+                text="text-sky-700"
+              />
+            </div>
           </div>
 
           {/* ── Macro Breakdown by Day + Pie/Distribution ── */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-            {/* Grouped bar chart — protein, carbs, fat by day */}
+            {/* Grouped bar chart */}
             <div className="md:col-span-2 bg-white rounded-[28px] p-7 shadow-[0_8px_30px_-8px_rgba(0,0,0,0.06)] border border-slate-100">
               <h2 className="font-display font-bold text-xl text-slate-800 mb-5">Macro Breakdown by Day</h2>
               {chartData.length === 0 ? (
@@ -254,7 +259,7 @@ export default function Analytics() {
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }} barSize={8} barGap={2}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} interval={tickInterval} />
                     <YAxis tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
                     <Bar dataKey="protein" name="protein" fill={MACRO_COLORS.protein} radius={[4, 4, 0, 0]} />
@@ -263,7 +268,6 @@ export default function Analytics() {
                   </BarChart>
                 </ResponsiveContainer>
               )}
-              {/* Legend */}
               <div className="flex gap-5 mt-4">
                 {[['Protein', MACRO_COLORS.protein], ['Carbs', MACRO_COLORS.carbs], ['Fat', MACRO_COLORS.fat]].map(([name, color]) => (
                   <div key={name} className="flex items-center gap-1.5">
@@ -274,7 +278,7 @@ export default function Analytics() {
               </div>
             </div>
 
-            {/* Macro Split Donut */}
+            {/* Donut / Pie */}
             <div className="bg-white rounded-[28px] p-7 shadow-[0_8px_30px_-8px_rgba(0,0,0,0.06)] border border-slate-100 flex flex-col">
               <h2 className="font-display font-bold text-xl text-slate-800 mb-5">
                 {view === 'monthly' && mealPie.length > 0 ? 'Meal Distribution' : 'Macro Split'}
@@ -336,16 +340,17 @@ export default function Analytics() {
             </div>
           </div>
 
-          {/* ── Daily Calories Bar Chart ── */}
+          {/* ── Daily Calorie Intake Bar Chart ── */}
           <div className="bg-white rounded-[28px] p-7 shadow-[0_8px_30px_-8px_rgba(0,0,0,0.06)] border border-slate-100">
-            <h2 className="font-display font-bold text-xl text-slate-800 mb-5">Daily Calorie Intake</h2>
+            <h2 className="font-display font-bold text-xl text-slate-800 mb-1">Daily Calorie Intake</h2>
+            <p className="text-slate-400 text-sm font-medium mb-5">{periodLabel}</p>
             {chartData.length === 0 ? (
               <div className="h-40 flex items-center justify-center text-slate-400 font-medium">No data yet.</div>
             ) : (
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} interval={tickInterval} />
                   <YAxis tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
                   <Bar dataKey="calories" name="calories" fill="#60a5fa" radius={[8, 8, 0, 0]} maxBarSize={60} />
@@ -354,51 +359,51 @@ export default function Analytics() {
             )}
           </div>
 
-          {/* ── Water Intake Chart ── */}
+          {/* ── Water Intake Chart (adapts to weekly/monthly) ── */}
           <div className="bg-white rounded-[28px] p-7 shadow-[0_8px_30px_-8px_rgba(0,0,0,0.06)] border border-slate-100">
             <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
               <div>
                 <h2 className="font-display font-bold text-xl text-slate-800 flex items-center gap-2">
-                  <Droplets className="w-5 h-5 text-blue-400" />
-                  Water Intake — Last 7 Days
+                  <Droplets className="w-5 h-5 text-sky-400" />
+                  {view === 'weekly' ? 'Water Intake — Last 7 Days' : `Water Intake — ${MONTHS[month - 1]} ${year}`}
                 </h2>
-                <p className="text-slate-400 text-sm font-medium mt-1">Daily hydration vs. your {(goals.water || 2500)}ml goal</p>
+                <p className="text-slate-400 text-sm font-medium mt-1">
+                  Daily hydration vs. your {(goals.water || 2500)}ml goal
+                </p>
               </div>
-              {waterHistory.length > 0 && (() => {
-                const avg = Math.round(waterHistory.reduce((a, d) => a + d.totalMl, 0) / waterHistory.length);
-                const best = Math.max(...waterHistory.map(d => d.totalMl));
-                return (
-                  <div className="flex gap-4">
-                    <div className="text-right">
-                      <div className="font-display font-extrabold text-2xl leading-none text-blue-500">
-                        {avg >= 1000 ? `${(avg / 1000).toFixed(1)}L` : `${avg}ml`}
-                      </div>
-                      <div className="text-xs text-slate-400 font-semibold mt-1">daily avg</div>
+              {!waterLoading && waterHistory.some(d => d.totalMl > 0) && (
+                <div className="flex gap-5">
+                  <div className="text-right">
+                    <div className="font-display font-extrabold text-2xl leading-none text-sky-500">
+                      {avgWater >= 1000 ? `${(avgWater / 1000).toFixed(1)}L` : `${avgWater}ml`}
                     </div>
-                    <div className="text-right">
-                      <div className="font-display font-extrabold text-2xl leading-none text-blue-700">
-                        {best >= 1000 ? `${(best / 1000).toFixed(1)}L` : `${best}ml`}
-                      </div>
-                      <div className="text-xs text-slate-400 font-semibold mt-1">best day</div>
-                    </div>
+                    <div className="text-xs text-slate-400 font-semibold mt-1">daily avg</div>
                   </div>
-                );
-              })()}
+                  <div className="text-right">
+                    <div className="font-display font-extrabold text-2xl leading-none text-sky-700">
+                      {bestWater >= 1000 ? `${(bestWater / 1000).toFixed(1)}L` : `${bestWater}ml`}
+                    </div>
+                    <div className="text-xs text-slate-400 font-semibold mt-1">best day</div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {waterLoading ? (
               <div className="h-40 skeleton rounded-2xl" />
-            ) : waterHistory.every(d => d.totalMl === 0) ? (
-              <div className="h-40 flex items-center justify-center text-slate-400 font-medium">No water logged yet. Start tracking on the dashboard!</div>
+            ) : !waterHistory.some(d => d.totalMl > 0) ? (
+              <div className="h-40 flex items-center justify-center text-slate-400 font-medium">
+                No water logged yet. Start tracking on the dashboard!
+              </div>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={waterHistory.map(d => ({ ...d, name: d.label }))} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                <BarChart data={waterHistory} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} tickFormatter={v => v >= 1000 ? `${v/1000}L` : v} />
+                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} interval={tickInterval} />
+                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} tickFormatter={v => v >= 1000 ? `${v / 1000}L` : v} />
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
-                  <ReferenceLine y={goals.water || 2500} stroke="#93c5fd" strokeDasharray="6 3" strokeWidth={2}
-                    label={{ value: 'Goal', position: 'insideTopRight', fill: '#93c5fd', fontSize: 11, fontWeight: 700 }}
+                  <ReferenceLine y={goals.water || 2500} stroke="#7dd3fc" strokeDasharray="6 3" strokeWidth={2}
+                    label={{ value: 'Goal', position: 'insideTopRight', fill: '#7dd3fc', fontSize: 11, fontWeight: 700 }}
                   />
                   <Bar dataKey="totalMl" name="Water" fill="#60a5fa" radius={[8, 8, 0, 0]} maxBarSize={60} />
                 </BarChart>
