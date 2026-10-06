@@ -147,9 +147,6 @@ export default function Analytics() {
 
   const totalDaysLogged = activeDays.length;
 
-  // Trend chart interval: monthly shows every other label to fit "Oct 1" style
-  const trendTickInterval = view === 'monthly' ? 4 : 0;
-
   const macroSummary = [
     { name: 'Protein', value: avgData.protein || 0, fill: MACRO_COLORS.protein },
     { name: 'Carbs',   value: avgData.carbs   || 0, fill: MACRO_COLORS.carbs   },
@@ -249,11 +246,11 @@ export default function Analytics() {
               ))}
             </div>
 
-            {chartData.length === 0 ? (
+            {weeklyCalorieData.length === 0 ? (
               <div className="h-64 flex items-center justify-center text-slate-400 font-medium">No data for this period yet.</div>
             ) : (
               <ResponsiveContainer width="100%" height={260}>
-                <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                <AreaChart data={weeklyCalorieData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id={`grad-${activeMacro}`} x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%"  stopColor={MACRO_COLORS[activeMacro]} stopOpacity={0.25} />
@@ -261,9 +258,9 @@ export default function Analytics() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} interval={trendTickInterval} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip content={view === 'monthly' ? <WeekTooltip /> : <CustomTooltip />} />
                   <Area type="monotone" dataKey={activeMacro} stroke={MACRO_COLORS[activeMacro]} strokeWidth={3}
                     fill={`url(#grad-${activeMacro})`}
                     dot={view === 'weekly' ? { fill: MACRO_COLORS[activeMacro], r: 4, strokeWidth: 0 } : false}
@@ -402,7 +399,7 @@ export default function Analytics() {
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <Tooltip content={view === 'monthly' ? <WeekTooltip /> : <CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
-                  <Bar dataKey="calories" name="calories" fill="#60a5fa" radius={[8, 8, 0, 0]} maxBarSize={60} />
+                  <Bar dataKey="calories" name="calories" fill="#60a5fa" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -459,7 +456,7 @@ export default function Analytics() {
                   <ReferenceLine y={goals.water || 2500} stroke="#7dd3fc" strokeDasharray="6 3" strokeWidth={2}
                     label={{ value: 'Goal', position: 'insideTopRight', fill: '#7dd3fc', fontSize: 11, fontWeight: 700 }}
                   />
-                  <Bar dataKey="totalMl" name="Water" fill="#60a5fa" radius={[8, 8, 0, 0]} maxBarSize={60} />
+                  <Bar dataKey="totalMl" name="Water" fill="#60a5fa" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
