@@ -31,7 +31,10 @@ export function AuthProvider({ children }) {
   };
 
   const signup = async (name, email, password) => {
-    const { data } = await axios.post(`${API}/auth/signup`, { name, email, password });
+    const { data } = await axios.post(`${API}/auth/signup`, 
+      JSON.stringify({ name, email, password }),
+      { headers: { 'Content-Type': 'application/json' } }
+    );
     setToken(data.token);
     setUser(data.user);
     localStorage.setItem('nutrivo_token', data.token);
@@ -40,7 +43,10 @@ export function AuthProvider({ children }) {
   };
 
   const signin = async (email, password) => {
-    const { data } = await axios.post(`${API}/auth/signin`, { email, password });
+    const { data } = await axios.post(`${API}/auth/signin`, 
+      JSON.stringify({ email, password }),
+      { headers: { 'Content-Type': 'application/json' } }
+    );
     setToken(data.token);
     setUser(data.user);
     localStorage.setItem('nutrivo_token', data.token);
