@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { Camera, BarChart3, Flame } from 'lucide-react';
 
 export default function AuthPage() {
   const [mode, setMode] = useState('signin');
@@ -52,11 +53,11 @@ export default function AuthPage() {
           
           <div className="flex flex-col gap-8 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
             {[
-              ['📸', 'AI-Powered Analysis', 'Photo-based meal recognition'],
-              ['📊', 'Smart Analytics', 'Weekly & monthly insights'],
-              ['🔥', 'Daily Streaks', 'Stay consistent, see results'],
-            ].map(([icon, title, desc]) => (
-              <div key={title} className="flex items-center gap-5 group">
+              [<Camera className="w-6 h-6 text-lime-500" />, 'AI-Powered Analysis', 'Photo-based meal recognition'],
+              [<BarChart3 className="w-6 h-6 text-teal-400" />, 'Smart Analytics', 'Weekly & monthly insights'],
+              [<Flame className="w-6 h-6 text-orange-400" />, 'Daily Streaks', 'Stay consistent, see results'],
+            ].map(([icon, title, desc], i) => (
+              <div key={i} className="flex items-center gap-5 group">
                 <div className="w-14 h-14 rounded-2xl bg-white dark:bg-[#17181f] border border-slate-200 dark:border-white/5 flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 group-hover:border-lime-500/30 group-hover:shadow-lime-500/20 transition-all duration-300">
                   {icon}
                 </div>
