@@ -7,7 +7,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // AI analyze meal from image using Gemini Vision
 async function analyzeMealImage(base64Image, mimeType = 'image/jpeg') {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+  const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
   
   const prompt = `You are a professional nutritionist and food analyst. Analyze this meal image and provide detailed nutritional information.
 
