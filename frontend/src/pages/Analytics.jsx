@@ -3,7 +3,7 @@ import axios from 'axios';
 import { API, useAuth } from '../context/AuthContext';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, Legend
+  ResponsiveContainer, PieChart, Pie, Cell, Legend, ReferenceLine
 } from 'recharts';
 import { TrendingUp, Flame, Beef, Wheat, Droplets } from 'lucide-react';
 
@@ -33,8 +33,11 @@ export default function Analytics() {
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
   const [activeMacro, setActiveMacro] = useState('calories');
+  const [waterHistory, setWaterHistory] = useState([]);
+  const [waterLoading, setWaterLoading] = useState(true);
 
   useEffect(() => { fetchData(); }, [view, month, year]);
+  useEffect(() => { fetchWaterHistory(); }, []);
 
   const fetchData = async () => {
     setLoading(true);
@@ -48,6 +51,15 @@ export default function Analytics() {
       }
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
+  };
+
+  const fetchWaterHistory = async () => {
+    setWaterLoading(true);
+    try {
+      const { data: d } = await axios.get(`${API}/water/history?days=7`);
+      setWaterHistory(d.history || []);
+    } catch (err) { console.error(err); }
+    finally { setWaterLoading(false); }
   };
 
   const goals = user?.goals || { calories: 2000, protein: 150, carbs: 250, fat: 65 };
@@ -183,8 +195,8 @@ export default function Analytics() {
             )}
           </div>
 
-          {/* ── Avg Macro Stat Cards ── */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* ── Avg Macro + Water Stat Cards ── */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {[
               { label: 'Avg Calories', key: 'calories', unit: 'kcal', color: '#60a5fa', bg: 'bg-blue-50',   text: 'text-blue-700'   },
               { label: 'Avg Protein',  key: 'protein',  unit: 'g',    color: '#a78bfa', bg: 'bg-purple-50', text: 'text-purple-700' },
@@ -206,6 +218,28 @@ export default function Analytics() {
                 </div>
               );
             })}
+
+            {/* Water Card */}
+            {(() => {
+              const avgWater = waterHistory.length
+                ? Math.round(waterHistory.reduce((a, d) => a + d.totalMl, 0) / waterHistory.length)
+                : 0;
+              const waterGoal = goals.water || 2500;
+              const pct = Math.min(Math.round((avgWater / waterGoal) * 100), 100);
+              return (
+                <div className="bg-blue-50 rounded-[24px] p-5">
+                  <div className="text-xs font-bold uppercase tracking-wider text-blue-700 opacity-70 mb-2">Avg Water</div>
+                  <div className="font-display font-extrabold text-2xl text-blue-700 mb-3">
+                    {avgWater >= 1000 ? `${(avgWater / 1000).toFixed(1)}L` : `${avgWater}`}
+                    <span className="text-sm font-semibold opacity-60 ml-1">{avgWater < 1000 ? 'ml' : ''}</span>
+                  </div>
+                  <div className="h-1.5 bg-white/60 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%`, background: '#60a5fa' }} />
+                  </div>
+                  <div className="text-xs text-blue-700 opacity-60 font-semibold mt-1.5">{pct}% of goal</div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* ── Macro Breakdown by Day + Pie/Distribution ── */}
@@ -315,6 +349,68 @@ export default function Analytics() {
                   <YAxis tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
                   <Bar dataKey="calories" name="calories" fill="#60a5fa" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          {/* ── Water Intake Chart ── */}
+          <div className="bg-white rounded-[28px] p-7 shadow-[0_8px_30px_-8px_rgba(0,0,0,0.06)] border border-slate-100">
+            <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+              <div>
+                <h2 className="font-display font-bold text-xl text-slate-800 flex items-center gap-2">
+                  <Droplets className="w-5 h-5 text-blue-400" />
+                  Water Intake — Last 7 Days
+                </h2>
+                <p className="text-slate-400 text-sm font-medium mt-1">Daily hydration vs. your {(goals.water || 2500)}ml goal</p>
+              </div>
+              {waterHistory.length > 0 && (() => {
+                const avg = Math.round(waterHistory.reduce((a, d) => a + d.totalMl, 0) / waterHistory.length);
+                const best = Math.max(...waterHistory.map(d => d.totalMl));
+                return (
+                  <div className="flex gap-4">
+                    <div className="text-right">
+                      <div className="font-display font-extrabold text-2xl leading-none text-blue-500">
+                        {avg >= 1000 ? `${(avg / 1000).toFixed(1)}L` : `${avg}ml`}
+                      </div>
+                      <div className="text-xs text-slate-400 font-semibold mt-1">daily avg</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-display font-extrabold text-2xl leading-none text-blue-700">
+                        {best >= 1000 ? `${(best / 1000).toFixed(1)}L` : `${best}ml`}
+                      </div>
+                      <div className="text-xs text-slate-400 font-semibold mt-1">best day</div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {waterLoading ? (
+              <div className="h-40 skeleton rounded-2xl" />
+            ) : waterHistory.every(d => d.totalMl === 0) ? (
+              <div className="h-40 flex items-center justify-center text-slate-400 font-medium">No water logged yet. Start tracking on the dashboard!</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={waterHistory.map(d => ({ ...d, name: d.label.split(',')[0] }))} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#60a5fa" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#93c5fd" stopOpacity={0.8} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} tickFormatter={v => v >= 1000 ? `${v/1000}L` : v} />
+                  <Tooltip
+                    contentStyle={{ background: '#fff', border: '1px solid #f1f5f9', borderRadius: 12, fontSize: 12, fontWeight: 600 }}
+                    formatter={(v) => [`${v}ml`, 'Water']}
+                    labelFormatter={(l) => l}
+                  />
+                  <ReferenceLine y={goals.water || 2500} stroke="#93c5fd" strokeDasharray="6 3" strokeWidth={2}
+                    label={{ value: 'Goal', position: 'insideTopRight', fill: '#93c5fd', fontSize: 11, fontWeight: 700 }}
+                  />
+                  <Bar dataKey="totalMl" name="Water" fill="url(#waterGrad)" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}

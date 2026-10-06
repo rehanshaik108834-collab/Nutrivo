@@ -75,6 +75,52 @@ function MacroBar({ label, value, goal, colorClass }) {
   );
 }
 
+/* ─── Custom Water Input ─── */
+function CustomWaterInput({ onAdd, disabled }) {
+  const [value, setValue] = useState('');
+  const [error, setError] = useState('');
+
+  const handleAdd = () => {
+    const ml = parseInt(value, 10);
+    if (!ml || ml <= 0 || ml > 5000) {
+      setError('Enter a value between 1–5000 ml');
+      return;
+    }
+    setError('');
+    onAdd(ml);
+    setValue('');
+  };
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <input
+            type="number"
+            min="1"
+            max="5000"
+            value={value}
+            onChange={e => { setValue(e.target.value); setError(''); }}
+            onKeyDown={e => e.key === 'Enter' && handleAdd()}
+            placeholder="Custom ml…"
+            className="w-full pl-4 pr-12 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-300 focus:bg-white transition-all"
+          />
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">ml</span>
+        </div>
+        <button
+          onClick={handleAdd}
+          disabled={disabled || !value}
+          className="px-4 py-3 rounded-2xl bg-blue-500 text-white font-bold text-sm hover:bg-blue-600 transition-all hover:scale-[1.03] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] flex items-center gap-1.5 shadow-sm shadow-blue-200"
+        >
+          <Plus className="w-4 h-4" />
+          Add
+        </button>
+      </div>
+      {error && <p className="text-xs text-red-500 font-semibold pl-1">{error}</p>}
+    </div>
+  );
+}
+
 /* ─── Water Tracker Card ─── */
 function WaterTracker({ isToday, waterGoal }) {
   const [totalMl, setTotalMl] = useState(0);
@@ -168,6 +214,9 @@ function WaterTracker({ isToday, waterGoal }) {
           ))}
         </div>
       )}
+
+      {/* Custom ml input */}
+      {isToday && <CustomWaterInput onAdd={addWater} disabled={adding} />}
     </div>
   );
 }
