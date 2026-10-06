@@ -11,7 +11,8 @@ const userSchema = new mongoose.Schema({
     protein: { type: Number, default: 150 },
     carbs: { type: Number, default: 250 },
     fat: { type: Number, default: 65 },
-    fiber: { type: Number, default: 30 }
+    fiber: { type: Number, default: 30 },
+    water: { type: Number, default: 2500 }
   },
   profile: {
     age: Number,

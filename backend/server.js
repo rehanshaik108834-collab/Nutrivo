@@ -7,6 +7,8 @@ const authRoutes = require('./routes/auth');
 const mealRoutes = require('./routes/meals');
 const analyticsRoutes = require('./routes/analytics');
 const userRoutes = require('./routes/users');
+const waterRoutes = require('./routes/water');
+const recipeRoutes = require('./routes/recipes');
 
 const app = express();
 
@@ -30,6 +32,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/meals', mealRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/water', waterRoutes);
+app.use('/api/recipes', recipeRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'Nutrivo API running' }));
 
