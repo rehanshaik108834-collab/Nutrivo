@@ -76,14 +76,15 @@ export default function AuthPage() {
             {/* Soft decorative blob inside card */}
             <div className="absolute top-0 right-0 w-28 h-28 bg-pastel-blue/40 blur-2xl rounded-full -mr-8 -mt-8" />
 
-            <div className="relative z-10 text-center mb-6">
-              <h2 className="font-display text-2xl font-extrabold text-slate-800 mb-1.5">
-                {mode === 'signin' ? 'Welcome back' : 'Create account'}
-              </h2>
-              <p className="text-slate-500 text-sm font-medium">
-                {mode === 'signin' ? 'Enter your details to sign in.' : 'Start your journey today.'}
-              </p>
-            </div>
+            <div className="relative z-10">
+              <div className="text-center mb-6">
+                <h2 className="font-display text-2xl font-extrabold text-slate-800 mb-1.5">
+                  {mode === 'signin' ? 'Welcome back' : 'Create account'}
+                </h2>
+                <p className="text-slate-500 text-sm font-medium">
+                  {mode === 'signin' ? 'Enter your details to sign in.' : 'Start your journey today.'}
+                </p>
+              </div>
 
             <form onSubmit={handle} className="flex flex-col gap-4">
                 {mode === 'signup' && (
