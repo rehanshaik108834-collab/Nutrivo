@@ -11,7 +11,7 @@ const MACRO_COLORS = { calories: '#60a5fa', protein: '#a78bfa', carbs: '#fbbf24'
 const PIE_COLORS   = ['#60a5fa', '#fbbf24', '#a78bfa', '#34d399'];
 const MONTHS       = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-/* ─── Shared tooltip ─── */
+/* ─── Shared tooltip (daily data) ─── */
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
@@ -26,8 +26,48 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
+/* ─── Week tooltip — shows date range on hover ─── */
+function WeekTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  const dateRange = payload[0]?.payload?.dateRange || label;
+  return (
+    <div className="bg-white border border-slate-100 shadow-lg rounded-2xl px-4 py-3 text-sm">
+      <div className="font-bold text-slate-500 mb-1">{label}</div>
+      <div className="text-xs text-slate-400 font-semibold mb-2">{dateRange}</div>
+      {payload.map((p, i) => (
+        <div key={i} className="font-extrabold mt-0.5" style={{ color: p.color }}>
+          {p.name}: {Math.round(p.value)}{p.name === 'calories' ? ' kcal' : p.name === 'Water' ? ' ml' : 'g'}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─── Group daily rows into calendar weeks ─── */
+function groupByWeek(days, monthNum, yearNum) {
+  const weeks = [];
+  const chunkSize = 7;
+  for (let i = 0; i < days.length; i += chunkSize) {
+    const chunk = days.slice(i, Math.min(i + chunkSize, days.length));
+    const weekNum = Math.floor(i / chunkSize) + 1;
+    const startDay = i + 1;
+    const endDay   = Math.min(i + chunkSize, days.length);
+    const monthName = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][monthNum - 1];
+    weeks.push({
+      name: `Week ${weekNum}`,
+      dateRange: `${monthName} ${startDay} – ${monthName} ${endDay}`,
+      calories: Math.round(chunk.reduce((a, d) => a + (d.calories || 0), 0) / chunk.length),
+      protein:  Math.round(chunk.reduce((a, d) => a + (d.protein  || 0), 0) / chunk.length),
+      carbs:    Math.round(chunk.reduce((a, d) => a + (d.carbs    || 0), 0) / chunk.length),
+      fat:      Math.round(chunk.reduce((a, d) => a + (d.fat      || 0), 0) / chunk.length),
+      totalMl:  Math.round(chunk.reduce((a, d) => a + (d.totalMl  || 0), 0) / chunk.length),
+    });
+  }
+  return weeks;
+}
+
 /* ─── Clean average stat card (no goal comparison) ─── */
-function AvgCard({ label, value, unit, color, bg, text }) {
+function AvgCard({ label, value, unit, bg, text }) {
   return (
     <div className={`${bg} rounded-[24px] p-5`}>
       <div className={`text-xs font-bold uppercase tracking-wider ${text} opacity-70 mb-3`}>{label}</div>
@@ -81,11 +121,9 @@ export default function Analytics() {
 
   const goals = user?.goals || { calories: 2000, protein: 150, carbs: 250, fat: 65, water: 2500 };
 
-  // Build chart data with proper labels per view
-  const chartData = data ? (data.days || []).map((d, i) => ({
-    name: view === 'weekly'
-      ? d.label  // Already short day name from backend
-      : d.label, // For monthly, backend should give "Oct 1" etc.
+  // Build chart data — monthly trend keeps full "Oct 1" labels, weekly uses short day names
+  const chartData = data ? (data.days || []).map((d) => ({
+    name: d.label,
     calories: Math.round(d.nutrition?.calories || 0),
     protein:  Math.round(d.nutrition?.protein  || 0),
     carbs:    Math.round(d.nutrition?.carbs    || 0),
@@ -101,7 +139,16 @@ export default function Analytics() {
       ]))
     : { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 
+  // Weekly aggregation for monthly bar charts
+  const weeklyCalorieData = view === 'monthly' ? groupByWeek(chartData, month, year) : chartData;
+  const weeklyWaterData   = view === 'monthly' ? groupByWeek(
+    waterHistory.map(d => ({ ...d })), month, year
+  ) : waterHistory;
+
   const totalDaysLogged = activeDays.length;
+
+  // Trend chart interval: monthly shows every other label to fit "Oct 1" style
+  const trendTickInterval = view === 'monthly' ? 4 : 0;
 
   const macroSummary = [
     { name: 'Protein', value: avgData.protein || 0, fill: MACRO_COLORS.protein },
@@ -214,12 +261,12 @@ export default function Analytics() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} interval={tickInterval} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} interval={trendTickInterval} />
                   <YAxis tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <Tooltip content={<CustomTooltip />} />
                   <Area type="monotone" dataKey={activeMacro} stroke={MACRO_COLORS[activeMacro]} strokeWidth={3}
                     fill={`url(#grad-${activeMacro})`}
-                    dot={{ fill: MACRO_COLORS[activeMacro], r: 4, strokeWidth: 0 }}
+                    dot={view === 'weekly' ? { fill: MACRO_COLORS[activeMacro], r: 4, strokeWidth: 0 } : false}
                     activeDot={{ r: 6, strokeWidth: 0 }} />
                 </AreaChart>
               </ResponsiveContainer>
@@ -340,19 +387,21 @@ export default function Analytics() {
             </div>
           </div>
 
-          {/* ── Daily Calorie Intake Bar Chart ── */}
+          {/* ── Daily / Weekly Calorie Intake Bar Chart ── */}
           <div className="bg-white rounded-[28px] p-7 shadow-[0_8px_30px_-8px_rgba(0,0,0,0.06)] border border-slate-100">
-            <h2 className="font-display font-bold text-xl text-slate-800 mb-1">Daily Calorie Intake</h2>
+            <h2 className="font-display font-bold text-xl text-slate-800 mb-1">
+              {view === 'weekly' ? 'Daily Calorie Intake' : 'Avg. Calorie Intake by Week'}
+            </h2>
             <p className="text-slate-400 text-sm font-medium mb-5">{periodLabel}</p>
-            {chartData.length === 0 ? (
+            {weeklyCalorieData.length === 0 ? (
               <div className="h-40 flex items-center justify-center text-slate-400 font-medium">No data yet.</div>
             ) : (
               <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                <BarChart data={weeklyCalorieData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} interval={tickInterval} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
+                  <Tooltip content={view === 'monthly' ? <WeekTooltip /> : <CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
                   <Bar dataKey="calories" name="calories" fill="#60a5fa" radius={[8, 8, 0, 0]} maxBarSize={60} />
                 </BarChart>
               </ResponsiveContainer>
@@ -368,10 +417,11 @@ export default function Analytics() {
                   {view === 'weekly' ? 'Water Intake — Last 7 Days' : `Water Intake — ${MONTHS[month - 1]} ${year}`}
                 </h2>
                 <p className="text-slate-400 text-sm font-medium mt-1">
-                  Daily hydration vs. your {(goals.water || 2500)}ml goal
+                  {view === 'weekly' ? 'Daily' : 'Weekly avg'} hydration vs. your {(goals.water || 2500)}ml goal
                 </p>
               </div>
-              {!waterLoading && waterHistory.some(d => d.totalMl > 0) && (
+              {/* Only show avg/best stats in weekly view */}
+              {view === 'weekly' && !waterLoading && waterHistory.some(d => d.totalMl > 0) && (
                 <div className="flex gap-5">
                   <div className="text-right">
                     <div className="font-display font-extrabold text-2xl leading-none text-sky-500">
@@ -397,11 +447,15 @@ export default function Analytics() {
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={waterHistory} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                <BarChart data={weeklyWaterData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} interval={tickInterval} />
+                  <XAxis
+                    dataKey={view === 'monthly' ? 'name' : 'label'}
+                    tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }}
+                    axisLine={false} tickLine={false}
+                  />
                   <YAxis tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} tickFormatter={v => v >= 1000 ? `${v / 1000}L` : v} />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
+                  <Tooltip content={view === 'monthly' ? <WeekTooltip /> : <CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
                   <ReferenceLine y={goals.water || 2500} stroke="#7dd3fc" strokeDasharray="6 3" strokeWidth={2}
                     label={{ value: 'Goal', position: 'insideTopRight', fill: '#7dd3fc', fontSize: 11, fontWeight: 700 }}
                   />
