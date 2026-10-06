@@ -140,8 +140,4 @@ Nutrivo utilizes a highly structured prompt to guide the Gemini Vision AI:
 4. Calculate comprehensive macro and micronutrients (Calories, Protein, Carbs, Fat, Fiber).
 5. Provide an AI Confidence Score (0-100) based on image clarity and food visibility.
 
----
 
-<div align="center">
-  <p>Built with ❤️</p>
-</div>
