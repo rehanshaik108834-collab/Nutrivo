@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const AuthContext = createContext(null);
 
@@ -66,3 +66,4 @@ export function AuthProvider({ children }) {
 
 export const useAuth = () => useContext(AuthContext);
 export { API };
+
