@@ -20,36 +20,49 @@ export default function AuthPage() {
   };
 
   return (
-    <div style={s.page}>
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0b0c10] flex relative overflow-hidden transition-colors duration-500">
       {/* Dynamic Background */}
-      <div style={s.bgWrap}>
-        <div style={{...s.bgOrb, ...s.orbTopLeft}} />
-        <div style={{...s.bgOrb, ...s.orbBottomRight}} />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute w-[50vw] h-[50vw] rounded-full blur-[120px] opacity-40 bg-lime-500/40 -top-1/4 -left-10 animate-[float_6s_ease-in-out_infinite]" />
+        <div className="absolute w-[40vw] h-[40vw] rounded-full blur-[120px] opacity-40 bg-teal-500/30 -bottom-10 -right-10 animate-[float_6s_ease-in-out_infinite]" style={{ animationDelay: '2s' }} />
       </div>
 
       {/* Main Content */}
-      <div style={s.container}>
+      <div className="w-full max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row items-center p-6 md:p-12 lg:p-20">
+        
         {/* Left panel */}
-        <div style={s.left}>
-          <div style={s.logo}>
-            <div style={s.logoIconContainer}>
-              <span style={s.logoIcon}>N</span>
+        <div className="flex-1 flex flex-col justify-center pr-0 md:pr-16 lg:pr-24 mb-12 md:mb-0">
+          <div className="flex items-center gap-3 mb-16 animate-fade-in-up">
+            <div className="bg-gradient-to-br from-lime-400 to-teal-500 p-0.5 rounded-xl shadow-lg shadow-lime-500/20">
+              <div className="w-10 h-10 bg-white dark:bg-[#17181f] rounded-[10px] flex items-center justify-center font-display font-bold text-xl text-slate-900 dark:text-white">
+                N
+              </div>
             </div>
-            <span style={s.logoText}>nutrivo</span>
+            <span className="font-display font-extrabold text-2xl tracking-tight text-slate-900 dark:text-white">nutrivo</span>
           </div>
-          <h1 style={s.headline}>Track nutrition <br /><span className="gradient-text">effortlessly.</span></h1>
-          <p style={s.sub}>Snap a photo of your meal. Our AI does the rest — calories, protein, macros, all of it in seconds.</p>
-          <div style={s.features}>
+          
+          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.1] text-slate-900 dark:text-white mb-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            Track nutrition <br />
+            <span className="bg-gradient-to-r from-lime-500 to-teal-400 bg-clip-text text-transparent">effortlessly.</span>
+          </h1>
+          
+          <p className="text-slate-500 dark:text-slate-400 text-lg md:text-xl leading-relaxed mb-12 max-w-lg animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            Snap a photo of your meal. Our AI does the rest — calories, protein, macros, all of it in seconds.
+          </p>
+          
+          <div className="flex flex-col gap-8 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
             {[
               ['📸', 'AI-Powered Analysis', 'Photo-based meal recognition'],
               ['📊', 'Smart Analytics', 'Weekly & monthly insights'],
               ['🔥', 'Daily Streaks', 'Stay consistent, see results'],
             ].map(([icon, title, desc]) => (
-              <div key={title} style={s.feature}>
-                <div style={s.featureIconWrap}>{icon}</div>
+              <div key={title} className="flex items-center gap-5 group">
+                <div className="w-14 h-14 rounded-2xl bg-white dark:bg-[#17181f] border border-slate-200 dark:border-white/5 flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 group-hover:border-lime-500/30 group-hover:shadow-lime-500/20 transition-all duration-300">
+                  {icon}
+                </div>
                 <div>
-                  <div style={s.featureTitle}>{title}</div>
-                  <div style={s.featureDesc}>{desc}</div>
+                  <div className="text-slate-900 dark:text-white font-bold text-lg">{title}</div>
+                  <div className="text-slate-500 dark:text-slate-400 text-sm mt-1">{desc}</div>
                 </div>
               </div>
             ))}
@@ -57,91 +70,84 @@ export default function AuthPage() {
         </div>
 
         {/* Right panel (Form) */}
-        <div style={s.right}>
-          <div className="glass-panel" style={s.formWrapper}>
-            <div style={s.form}>
-              <h2 style={s.formTitle}>{mode === 'signin' ? 'Welcome back' : 'Create account'}</h2>
-              <p style={s.formSub}>{mode === 'signin' ? 'Sign in to continue tracking' : 'Start your nutrition journey'}</p>
+        <div className="w-full md:w-[440px] flex-shrink-0 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+          <div className="bg-white/70 dark:bg-[#17181f]/70 backdrop-blur-2xl border border-white/40 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-black/50 rounded-3xl p-8 sm:p-10">
+            <h2 className="font-display text-3xl font-extrabold text-slate-900 dark:text-white mb-2">
+              {mode === 'signin' ? 'Welcome back' : 'Create account'}
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 mb-8">
+              {mode === 'signin' ? 'Sign in to continue tracking' : 'Start your nutrition journey'}
+            </p>
 
-              <form onSubmit={handle} style={s.fields}>
-                {mode === 'signup' && (
-                  <div style={s.field}>
-                    <label style={s.label}>Full Name</label>
-                    <input className="input" placeholder="Alex Johnson" value={form.name}
-                      onChange={e => setForm({...form, name: e.target.value})} required />
-                  </div>
-                )}
-                <div style={s.field}>
-                  <label style={s.label}>Email</label>
-                  <input className="input" type="email" placeholder="you@example.com" value={form.email}
-                    onChange={e => setForm({...form, email: e.target.value})} required />
+            <form onSubmit={handle} className="flex flex-col gap-5">
+              {mode === 'signup' && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Full Name</label>
+                  <input 
+                    className="w-full bg-slate-50 dark:bg-[#0b0c10] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white focus:outline-none focus:border-lime-500 focus:ring-4 focus:ring-lime-500/10 transition-all"
+                    placeholder="Alex Johnson" 
+                    value={form.name}
+                    onChange={e => setForm({...form, name: e.target.value})} 
+                    required 
+                  />
                 </div>
-                <div style={s.field}>
-                  <label style={s.label}>Password</label>
-                  <input className="input" type="password" placeholder="••••••••" value={form.password}
-                    onChange={e => setForm({...form, password: e.target.value})} required />
-                </div>
-
-                {error && <div style={s.error}>{error}</div>}
-
-                <button className="btn btn-lime" type="submit" disabled={loading} style={{ width: '100%', padding: '14px', fontSize: 16, marginTop: 12 }}>
-                  {loading ? <span className="spinner" /> : mode === 'signin' ? 'Sign In' : 'Create Account'}
-                </button>
-              </form>
-
-              <div style={s.toggle}>
-                {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
-                <button style={s.toggleBtn} type="button" onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); }}>
-                  {mode === 'signin' ? 'Sign up' : 'Sign in'}
-                </button>
+              )}
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Email</label>
+                <input 
+                  className="w-full bg-slate-50 dark:bg-[#0b0c10] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white focus:outline-none focus:border-lime-500 focus:ring-4 focus:ring-lime-500/10 transition-all"
+                  type="email" 
+                  placeholder="you@example.com" 
+                  value={form.email}
+                  onChange={e => setForm({...form, email: e.target.value})} 
+                  required 
+                />
               </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Password</label>
+                <input 
+                  className="w-full bg-slate-50 dark:bg-[#0b0c10] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white focus:outline-none focus:border-lime-500 focus:ring-4 focus:ring-lime-500/10 transition-all"
+                  type="password" 
+                  placeholder="••••••••" 
+                  value={form.password}
+                  onChange={e => setForm({...form, password: e.target.value})} 
+                  required 
+                />
+              </div>
+
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm font-medium animate-fade-in-up">
+                  {error}
+                </div>
+              )}
+
+              <button 
+                type="submit" 
+                disabled={loading} 
+                className="w-full bg-gradient-to-r from-lime-500 to-lime-600 hover:from-lime-400 hover:to-lime-500 text-white dark:text-slate-950 font-bold text-lg py-4 rounded-xl shadow-lg shadow-lime-500/30 hover:shadow-lime-500/50 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none mt-2 flex justify-center items-center h-[56px]"
+              >
+                {loading ? (
+                  <div className="w-6 h-6 border-[3px] border-white/30 border-t-white dark:border-slate-950/30 dark:border-t-slate-950 rounded-full animate-spin" />
+                ) : (
+                  mode === 'signin' ? 'Sign In' : 'Create Account'
+                )}
+              </button>
+            </form>
+
+            <div className="text-center mt-8 text-slate-500 dark:text-slate-400 text-sm">
+              {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
+              <button 
+                type="button" 
+                onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); }}
+                className="font-bold text-lime-600 dark:text-lime-400 hover:text-lime-700 dark:hover:text-lime-300 transition-colors"
+              >
+                {mode === 'signin' ? 'Sign up' : 'Sign in'}
+              </button>
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
 }
-
-const s = {
-  page: { minHeight: '100vh', background: 'var(--bg)', position: 'relative', overflow: 'hidden', display: 'flex' },
-  bgWrap: { position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 },
-  bgOrb: { position: 'absolute', borderRadius: '50%', filter: 'blur(120px)', opacity: 0.4 },
-  orbTopLeft: { width: '50vw', height: '50vw', background: 'var(--lime)', top: '-20%', left: '-10%' },
-  orbBottomRight: { width: '40vw', height: '40vw', background: 'var(--teal)', bottom: '-10%', right: '-10%' },
-  container: { display: 'flex', width: '100%', maxWidth: 1200, margin: '0 auto', position: 'relative', zIndex: 1, padding: '40px' },
-  left: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: '60px' },
-  logo: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 60 },
-  logoIconContainer: { background: 'linear-gradient(135deg, var(--lime), var(--teal))', padding: '2px', borderRadius: 12 },
-  logoIcon: {
-    width: 38, height: 38, background: 'var(--surface)', color: 'var(--text)',
-    borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20
-  },
-  logoText: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, color: 'var(--text)' },
-  headline: { fontFamily: 'var(--font-display)', fontSize: 56, fontWeight: 800, lineHeight: 1.1, color: 'var(--text)', marginBottom: 24 },
-  sub: { color: 'var(--text2)', fontSize: 18, lineHeight: 1.6, marginBottom: 48, maxWidth: 480 },
-  features: { display: 'flex', flexDirection: 'column', gap: 24 },
-  feature: { display: 'flex', alignItems: 'center', gap: 20 },
-  featureIconWrap: { 
-    width: 48, height: 48, borderRadius: 14, background: 'var(--surface)', 
-    border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24,
-    boxShadow: 'var(--shadow-sm)'
-  },
-  featureTitle: { color: 'var(--text)', fontWeight: 700, fontSize: 16 },
-  featureDesc: { color: 'var(--text3)', fontSize: 14, marginTop: 4 },
-  right: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' },
-  formWrapper: { width: '100%', maxWidth: 440, padding: '48px', animation: 'fadeUp 0.5s ease' },
-  form: { display: 'flex', flexDirection: 'column' },
-  formTitle: { fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, color: 'var(--text)', marginBottom: 8 },
-  formSub: { color: 'var(--text2)', fontSize: 15, marginBottom: 36 },
-  fields: { display: 'flex', flexDirection: 'column', gap: 20 },
-  field: { display: 'flex', flexDirection: 'column', gap: 8 },
-  label: { fontSize: 14, fontWeight: 600, color: 'var(--text2)' },
-  error: {
-    background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
-    color: 'var(--coral)', padding: '14px 16px', borderRadius: 12, fontSize: 14, fontWeight: 500
-  },
-  toggle: { textAlign: 'center', marginTop: 32, color: 'var(--text3)', fontSize: 15 },
-  toggleBtn: { background: 'none', border: 'none', color: 'var(--lime-dim)', cursor: 'pointer', fontWeight: 700, fontSize: 15, transition: 'color 0.2s' }
-};
