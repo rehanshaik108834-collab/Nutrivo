@@ -1,12 +1,14 @@
 const router = require('express').Router();
-const Groq = require('groq-sdk');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const Meal = require('../models/Meal');
 const auth = require('../middleware/auth');
 
-const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// AI analyze meal from image using Groq vision (Llama 4 Scout)
+// AI analyze meal from image using Gemini Vision
 async function analyzeMealImage(base64Image, mimeType = 'image/jpeg') {
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  
   const prompt = `You are a professional nutritionist and food analyst. Analyze this meal image and provide detailed nutritional information.
 
 Return ONLY a valid JSON object with this exact structure (no markdown, no explanation, no backticks):
@@ -53,23 +55,17 @@ Rules:
 - If image is unclear, still provide best estimates with lower confidence score
 - Return ONLY the JSON object, nothing else`;
 
-  const response = await client.chat.completions.create({
-    model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-    max_tokens: 2000,
-    response_format: { type: 'json_object' },
-    messages: [{
-      role: 'user',
-      content: [
-        {
-          type: 'image_url',
-          image_url: { url: `data:${mimeType};base64,${base64Image}` }
-        },
-        { type: 'text', text: prompt }
-      ]
-    }]
-  });
+  const imageParts = [
+    {
+      inlineData: {
+        data: base64Image,
+        mimeType: mimeType
+      }
+    }
+  ];
 
-  const text = response.choices[0].message.content.trim();
+  const result = await model.generateContent([prompt, ...imageParts]);
+  const text = result.response.text();
   const clean = text.replace(/```json|```/g, '').trim();
   return JSON.parse(clean);
 }
