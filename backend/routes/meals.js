@@ -7,7 +7,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // AI analyze meal from image using Gemini Vision
 async function analyzeMealImage(base64Image, mimeType = 'image/jpeg') {
-  const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+  const modelsToTry = ["gemini-flash-latest", "gemini-3.5-flash", "gemini-2.5-flash"];
   
   const prompt = `You are a professional nutritionist and food analyst. Analyze this meal image and provide detailed nutritional information.
 
@@ -64,10 +64,22 @@ Rules:
     }
   ];
 
-  const result = await model.generateContent([prompt, ...imageParts]);
-  const text = result.response.text();
-  const clean = text.replace(/```json|```/g, '').trim();
-  return JSON.parse(clean);
+  for (let i = 0; i < modelsToTry.length; i++) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelsToTry[i] });
+      const result = await model.generateContent([prompt, ...imageParts]);
+      const text = result.response.text();
+      const clean = text.replace(/```json|```/g, '').trim();
+      return JSON.parse(clean);
+    } catch (error) {
+      console.warn(`Model ${modelsToTry[i]} failed:`, error.message);
+      if (i === modelsToTry.length - 1) {
+        throw error; 
+      }
+      // Wait for 1.5 seconds before retrying with the next model
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    }
+  }
 }
 
 // Log a meal
